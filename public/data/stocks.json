@@ -1,0 +1,33 @@
+{
+  "dataAsOf": "2026-04-14",
+  "sources": [
+    "https://stockanalysis.com",
+    "https://www.gurufocus.com",
+    "https://finance.yahoo.com",
+    "https://www.financecharts.com"
+  ],
+  "disclaimer": "Není investiční doporučení. Data jsou informativní, ceny se mění v reálném čase.",
+  "stocks": [
+    { "ticker": "MU",   "name": "Micron",        "sector": "Semicon",   "currency": "USD", "price": 377.58,  "pe": 17.83, "fwdPe": 12.33, "gain52w": 440.12, "avgTarget": 453.79,  "cons": "Strong Buy" },
+    { "ticker": "MSFT", "name": "Microsoft",     "sector": "Software",  "currency": "USD", "price": 370.87,  "pe": 23.21, "fwdPe": 21.11, "gain52w": -5.02,  "avgTarget": 595.58,  "cons": "Strong Buy" },
+    { "ticker": "META", "name": "Meta",          "sector": "Media",     "currency": "USD", "price": 629.86,  "pe": 26.75, "fwdPe": 21.13, "gain52w": 8.39,   "avgTarget": 834.74,  "cons": "Strong Buy" },
+    { "ticker": "GOOGL","name": "Alphabet",      "sector": "Media",     "currency": "USD", "price": 317.24,  "pe": 29.49, "fwdPe": 27.52, "gain52w": 120.10, "avgTarget": 354.86,  "cons": "Strong Buy" },
+    { "ticker": "NVDA", "name": "Nvidia",        "sector": "Semicon",   "currency": "USD", "price": 188.63,  "pe": 38.50, "fwdPe": 22.74, "gain52w": 70.54,  "avgTarget": 264.54,  "cons": "Strong Buy" },
+    { "ticker": "AMD",  "name": "AMD",           "sector": "Semicon",   "currency": "USD", "price": 245.50,  "pe": 84.36, "fwdPe": 33.05, "gain52w": 154.63, "avgTarget": 260.85,  "cons": "Buy" },
+    { "ticker": "TSM",  "name": "TSMC",          "sector": "Semicon",   "currency": "USD", "price": 370.60,  "pe": 29.87, "fwdPe": 21.85, "gain52w": 133.45, "avgTarget": 374.29,  "cons": "Strong Buy" },
+    { "ticker": "AVGO", "name": "Broadcom",      "sector": "Semicon",   "currency": "USD", "price": 380.78,  "pe": 73.99, "fwdPe": 28.14, "gain52w": 108.72, "avgTarget": 438.43,  "cons": "Strong Buy", "note": "vysoké TTM PE kvůli VMware akvizici" },
+    { "ticker": "KLAC", "name": "KLA",           "sector": "Equip",     "currency": "USD", "price": 1516.84, "pe": 43.05, "fwdPe": 36.04, "gain52w": 96.88,  "avgTarget": 1611.79, "cons": "Buy" },
+    { "ticker": "AMAT", "name": "Applied Mat.",  "sector": "Equip",     "currency": "USD", "price": 348.47,  "pe": 38.00, "fwdPe": 33.93, "gain52w": 82.82,  "avgTarget": 300.00,  "cons": "Buy" },
+    { "ticker": "LRCX", "name": "Lam Research",  "sector": "Equip",     "currency": "USD", "price": 263.66,  "pe": 44.83, "fwdPe": 35.72, "gain52w": 199.93, "avgTarget": 241.79,  "cons": "Strong Buy" },
+    { "ticker": "ASML", "name": "ASML",          "sector": "Equip",     "currency": "USD", "price": 1478.28, "pe": 46.29, "fwdPe": 40.00, "gain52w": 85.56,  "avgTarget": 1475.86, "cons": "Buy" },
+    { "ticker": "V",    "name": "Visa",          "sector": "Payments",  "currency": "USD", "price": 302.55,  "pe": 28.49, "fwdPe": 22.92, "gain52w": -3.38,  "avgTarget": 397.43,  "cons": "Strong Buy" },
+    { "ticker": "MA",   "name": "Mastercard",    "sector": "Payments",  "currency": "USD", "price": 491.65,  "pe": 30.25, "fwdPe": 25.50, "gain52w": -9.65,  "avgTarget": 654.96,  "cons": "Strong Buy" },
+    { "ticker": "DUOL", "name": "Duolingo",      "sector": "Software",  "currency": "USD", "price": 99.70,   "pe": 11.62, "fwdPe": 34.40, "gain52w": -65.96, "avgTarget": 176.88,  "cons": "Buy", "note": "nízké TTM PE díky jednorázovým ziskům" },
+    { "ticker": "DSY",  "name": "Dassault",      "sector": "Software",  "currency": "EUR", "price": 16.92,   "pe": 20.47, "fwdPe": 13.90, "gain52w": -53.34, "avgTarget": 23.25,   "cons": "Hold" },
+    { "ticker": "FICO", "name": "FICO",          "sector": "Software",  "currency": "USD", "price": 1089.76, "pe": 40.33, "fwdPe": 24.23, "gain52w": -41.68, "avgTarget": null,    "cons": "Buy" },
+    { "ticker": "SPGI", "name": "S&P Global",    "sector": "FinData",   "currency": "USD", "price": 415.42,  "pe": 29.61, "fwdPe": 22.13, "gain52w": -4.76,  "avgTarget": 563.00,  "cons": "Strong Buy" },
+    { "ticker": "MCO",  "name": "Moody's",       "sector": "FinData",   "currency": "USD", "price": 432.00,  "pe": 31.08, "fwdPe": 25.37, "gain52w": -6.33,  "avgTarget": 550.63,  "cons": "Buy" },
+    { "ticker": "GE",   "name": "GE Aerospace",  "sector": "Aerospace", "currency": "USD", "price": 283.00,  "pe": 35.13, "fwdPe": 37.97, "gain52w": 36.38,  "avgTarget": 337.50,  "cons": "Strong Buy", "note": "fwd PE > TTM PE (očekávaný pokles zisků)" },
+    { "ticker": "AMZN", "name": "Amazon",        "sector": "Cloud",     "currency": "USD", "price": 238.38,  "pe": 33.25, "fwdPe": 30.80, "gain52w": 29.13,  "avgTarget": 279.45,  "cons": "Strong Buy" }
+  ]
+}

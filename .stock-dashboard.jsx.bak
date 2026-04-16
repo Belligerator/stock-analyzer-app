@@ -1,0 +1,152 @@
+import { useState } from "react";
+
+const stocks = [
+  { ticker:"MU", name:"Micron", sector:"Semicon", price:377.58, pe:17.83, fwdPe:12.33, gain52w:440.12, avgTarget:453.79, cons:"Strong Buy" },
+  { ticker:"MSFT", name:"Microsoft", sector:"Software", price:370.87, pe:23.21, fwdPe:21.11, gain52w:-5.02, avgTarget:595.58, cons:"Strong Buy" },
+  { ticker:"META", name:"Meta", sector:"Media", price:629.86, pe:26.75, fwdPe:21.13, gain52w:8.39, avgTarget:834.74, cons:"Strong Buy" },
+  { ticker:"GOOGL", name:"Alphabet", sector:"Media", price:317.24, pe:29.49, fwdPe:27.52, gain52w:120.10, avgTarget:354.86, cons:"Strong Buy" },
+  { ticker:"NVDA", name:"Nvidia", sector:"Semicon", price:188.63, pe:38.50, fwdPe:22.74, gain52w:70.54, avgTarget:264.54, cons:"Strong Buy" },
+  { ticker:"AMD", name:"AMD", sector:"Semicon", price:245.50, pe:84.36, fwdPe:33.05, gain52w:154.63, avgTarget:260.85, cons:"Buy" },
+  { ticker:"TSM", name:"TSMC", sector:"Semicon", price:370.60, pe:29.87, fwdPe:21.85, gain52w:133.45, avgTarget:374.29, cons:"Strong Buy" },
+  { ticker:"AVGO", name:"Broadcom", sector:"Semicon", price:380.78, pe:73.99, fwdPe:28.14, gain52w:108.72, avgTarget:438.43, cons:"Strong Buy" },
+  { ticker:"KLAC", name:"KLA", sector:"Equip", price:1516.84, pe:43.05, fwdPe:36.04, gain52w:96.88, avgTarget:1611.79, cons:"Buy" },
+  { ticker:"AMAT", name:"Applied Mat.", sector:"Equip", price:348.47, pe:38.00, fwdPe:33.93, gain52w:82.82, avgTarget:300.00, cons:"Buy" },
+  { ticker:"LRCX", name:"Lam Research", sector:"Equip", price:263.66, pe:44.83, fwdPe:35.72, gain52w:199.93, avgTarget:241.79, cons:"Strong Buy" },
+  { ticker:"ASML", name:"ASML", sector:"Equip", price:1478.28, pe:46.29, fwdPe:40.00, gain52w:85.56, avgTarget:1475.86, cons:"Buy" },
+  { ticker:"V", name:"Visa", sector:"Payments", price:302.55, pe:28.49, fwdPe:22.92, gain52w:-3.38, avgTarget:397.43, cons:"Strong Buy" },
+  { ticker:"MA", name:"Mastercard", sector:"Payments", price:491.65, pe:30.25, fwdPe:25.50, gain52w:-9.65, avgTarget:654.96, cons:"Strong Buy" },
+  { ticker:"DUOL", name:"Duolingo", sector:"Software", price:99.70, pe:11.62, fwdPe:34.40, gain52w:-65.96, avgTarget:176.88, cons:"Buy" },
+  { ticker:"DSY", name:"Dassault (€)", sector:"Software", price:16.92, pe:20.47, fwdPe:13.90, gain52w:-53.34, avgTarget:23.25, cons:"Hold" },
+  { ticker:"FICO", name:"FICO", sector:"Software", price:1089.76, pe:40.33, fwdPe:24.23, gain52w:-41.68, avgTarget:null, cons:"Buy" },
+  { ticker:"SPGI", name:"S&P Global", sector:"FinData", price:415.42, pe:29.61, fwdPe:22.13, gain52w:-4.76, avgTarget:563.00, cons:"Strong Buy" },
+  { ticker:"MCO", name:"Moody's", sector:"FinData", price:432.00, pe:31.08, fwdPe:25.37, gain52w:-6.33, avgTarget:550.63, cons:"Buy" },
+  { ticker:"GE", name:"GE Aerospace", sector:"Aerospace", price:283.00, pe:35.13, fwdPe:37.97, gain52w:36.38, avgTarget:337.50, cons:"Strong Buy" },
+  { ticker:"AMZN", name:"Amazon", sector:"Cloud", price:238.38, pe:33.25, fwdPe:30.80, gain52w:29.13, avgTarget:279.45, cons:"Strong Buy" },
+];
+
+const up = (p, t) => t && p ? ((t - p) / p * 100) : null;
+
+export default function StockDashboard() {
+  const [sortKey, setSortKey] = useState("ticker");
+  const [sortDir, setSortDir] = useState(1);
+  const [filter, setFilter] = useState("All");
+
+  const sectors = ["All", ...new Set(stocks.map(s => s.sector))];
+
+  const sort = (k) => {
+    if (sortKey === k) setSortDir(-sortDir);
+    else { setSortKey(k); setSortDir(1); }
+  };
+
+  const filtered = filter === "All" ? stocks : stocks.filter(s => s.sector === filter);
+  const sorted = [...filtered].sort((a, b) => {
+    let va = sortKey === "upside" ? up(a.price, a.avgTarget) : a[sortKey];
+    let vb = sortKey === "upside" ? up(b.price, b.avgTarget) : b[sortKey];
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === "string") return va.localeCompare(vb) * sortDir;
+    return (va - vb) * sortDir;
+  });
+
+  const gc = v => v == null ? {} : v >= 0 ? { color: "#22c55e" } : { color: "#ef4444" };
+  const fp = v => v == null ? "—" : v >= 1000 ? `$${v.toLocaleString("en-US",{maximumFractionDigits:0})}` : v < 100 ? `$${v.toFixed(2)}` : `$${v.toFixed(2)}`;
+  const fpe = v => v == null ? "—" : `${v.toFixed(1)}×`;
+  const fpct = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+
+  const cols = [
+    { k:"ticker", l:"Ticker", a:"left" },
+    { k:"name", l:"Název", a:"left" },
+    { k:"price", l:"Cena", a:"right" },
+    { k:"pe", l:"P/E", a:"right" },
+    { k:"fwdPe", l:"Fwd P/E", a:"right" },
+    { k:"gain52w", l:"52W", a:"right" },
+    { k:"avgTarget", l:"Target", a:"right" },
+    { k:"upside", l:"Upside", a:"right" },
+    { k:"cons", l:"Rating", a:"center" },
+  ];
+
+  return (
+    <div style={{ fontFamily:"'SF Mono','Fira Code','Cascadia Code',monospace", background:"#0c1017", color:"#b8c5d6", minHeight:"100vh", padding:"20px 12px" }}>
+      <div style={{ maxWidth:1200, margin:"0 auto" }}>
+        <div style={{ marginBottom:20, borderBottom:"1px solid #1c2533", paddingBottom:14 }}>
+          <h1 style={{ fontSize:18, fontWeight:700, color:"#e8edf3", margin:0 }}>
+            Akciový přehled — 14. dubna 2026
+          </h1>
+          <p style={{ fontSize:10, color:"#556677", marginTop:4 }}>
+            StockAnalysis · GuruFocus · Yahoo Finance · FinanceCharts — Dassault v EUR, ostatní USD
+          </p>
+        </div>
+
+        <div style={{ display:"flex", gap:4, marginBottom:12, flexWrap:"wrap" }}>
+          {sectors.map(s => (
+            <button key={s} onClick={() => setFilter(s)} style={{
+              padding:"4px 10px", fontSize:10, borderRadius:3, cursor:"pointer",
+              fontFamily:"inherit", transition:"all .15s",
+              border: filter === s ? "1px solid #3b82f6" : "1px solid #1c2533",
+              background: filter === s ? "rgba(59,130,246,.12)" : "rgba(12,16,23,.6)",
+              color: filter === s ? "#60a5fa" : "#778899",
+            }}>{s}</button>
+          ))}
+        </div>
+
+        <div style={{ overflowX:"auto", borderRadius:6, border:"1px solid #1c2533" }}>
+          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
+            <thead>
+              <tr style={{ background:"#111822" }}>
+                {cols.map(c => (
+                  <th key={c.k} onClick={() => sort(c.k)} style={{
+                    padding:"8px 8px", textAlign:c.a, color:"#778899", fontWeight:600,
+                    fontSize:9, textTransform:"uppercase", letterSpacing:".06em",
+                    cursor:"pointer", whiteSpace:"nowrap", userSelect:"none",
+                    borderBottom:"2px solid #1c2533"
+                  }}>
+                    {c.l} <span style={{ opacity: sortKey===c.k ? 1 : .25 }}>{sortKey===c.k ? (sortDir===1?"▲":"▼") : "↕"}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((s, i) => {
+                const u = up(s.price, s.avgTarget);
+                return (
+                  <tr key={s.ticker} style={{
+                    background: i%2===0 ? "rgba(17,24,34,.4)" : "transparent",
+                    borderBottom:"1px solid #141c28"
+                  }}>
+                    <td style={{ padding:"7px 8px", fontWeight:700, color:"#60a5fa" }}>{s.ticker}</td>
+                    <td style={{ padding:"7px 8px", color:"#d0d8e4" }}>{s.name}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right", fontWeight:600, color:"#e8edf3" }}>{fp(s.price)}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right", color: s.pe>50 ? "#f59e0b" : s.pe<20 ? "#22c55e" : "#b8c5d6" }}>{fpe(s.pe)}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right", fontWeight:600, color: s.fwdPe<25 ? "#22c55e" : s.fwdPe>35 ? "#f59e0b" : "#b8c5d6" }}>{fpe(s.fwdPe)}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right", fontWeight:600, ...gc(s.gain52w) }}>{fpct(s.gain52w)}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right" }}>{fp(s.avgTarget)}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"right", fontWeight:600, ...gc(u) }}>{u != null ? fpct(u) : "—"}</td>
+                    <td style={{ padding:"7px 8px", textAlign:"center" }}>
+                      <span style={{
+                        padding:"2px 6px", borderRadius:3, fontSize:9, fontWeight:600,
+                        background: s.cons==="Strong Buy" ? "rgba(34,197,94,.1)" : s.cons==="Hold" ? "rgba(148,163,184,.1)" : "rgba(250,204,21,.08)",
+                        color: s.cons==="Strong Buy" ? "#22c55e" : s.cons==="Hold" ? "#94a3b8" : "#eab308",
+                        border: `1px solid ${s.cons==="Strong Buy" ? "rgba(34,197,94,.25)" : s.cons==="Hold" ? "rgba(148,163,184,.2)" : "rgba(250,204,21,.2)"}`,
+                      }}>{s.cons}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop:14, padding:12, background:"rgba(17,24,34,.5)", borderRadius:6, border:"1px solid #1c2533" }}>
+          <p style={{ fontSize:9, color:"#556677", lineHeight:1.6, margin:0 }}>
+            <strong style={{ color:"#778899" }}>Legenda:</strong>{" "}
+            P/E = trailing 12M · Fwd P/E = odhad dalších 12M · Target = avg 12M price target analytiků · Upside = k avg targetu ·{" "}
+            <span style={{ color:"#22c55e" }}>Zelená</span> Fwd PE&lt;25 ·{" "}
+            <span style={{ color:"#f59e0b" }}>Žlutá</span> PE&gt;50 / Fwd PE&gt;35 ·{" "}
+            DSY v EUR · DUOL: nízké TTM PE díky jednorázovým ziskům · AVGO: vysoké TTM PE kvůli VMware akvizici ·{" "}
+            GE: fwd PE &gt; TTM PE (očekávaný pokles zisků) · ⚠ Není investiční doporučení
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
