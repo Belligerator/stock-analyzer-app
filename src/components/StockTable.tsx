@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Stock } from "../types/stocks";
 import { upside, formatPrice, formatPe, formatPct, gainColor } from "../utils/format";
 
-type SortKey = "ticker" | "name" | "price" | "pe" | "fwdPe" | "gain52w" | "avgTarget" | "upside" | "cons";
+type SortKey = "ticker" | "name" | "price" | "fwdPe" | "gain52w" | "upside" | "cons";
 
 interface Column {
   key: SortKey;
@@ -14,21 +14,21 @@ const columns: Column[] = [
   { key: "ticker", label: "Ticker", align: "left" },
   { key: "name", label: "Název", align: "left" },
   { key: "price", label: "Cena", align: "right" },
-  { key: "pe", label: "P/E", align: "right" },
   { key: "fwdPe", label: "Fwd P/E", align: "right" },
   { key: "gain52w", label: "52W", align: "right" },
-  { key: "avgTarget", label: "Target", align: "right" },
   { key: "upside", label: "Upside", align: "right" },
   { key: "cons", label: "Rating", align: "center" },
 ];
 
 interface StockTableProps {
   stocks: Stock[];
+  onSelect: (stock: Stock) => void;
 }
 
-export function StockTable({ stocks }: StockTableProps) {
+export function StockTable({ stocks, onSelect }: StockTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("ticker");
   const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [hoverTicker, setHoverTicker] = useState<string | null>(null);
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(d => (d === 1 ? -1 : 1));
@@ -64,6 +64,12 @@ export function StockTable({ stocks }: StockTableProps) {
         background: "rgba(148,163,184,.1)",
         color: "#94a3b8",
         border: "1px solid rgba(148,163,184,.2)",
+      };
+    if (cons === "Sell" || cons === "Strong Sell")
+      return {
+        background: "rgba(239,68,68,.1)",
+        color: "#ef4444",
+        border: "1px solid rgba(239,68,68,.25)",
       };
     return {
       background: "rgba(250,204,21,.08)",
@@ -106,18 +112,45 @@ export function StockTable({ stocks }: StockTableProps) {
         <tbody>
           {sorted.map((s, i) => {
             const u = upside(s.price, s.avgTarget);
-            const peColor = s.pe == null ? "#b8c5d6" : s.pe > 50 ? "#f59e0b" : s.pe < 20 ? "#22c55e" : "#b8c5d6";
-            const fwdColor = s.fwdPe == null ? "#b8c5d6" : s.fwdPe < 25 ? "#22c55e" : s.fwdPe > 35 ? "#f59e0b" : "#b8c5d6";
+            const fwdColor =
+              s.fwdPe == null ? "#b8c5d6" : s.fwdPe < 25 ? "#22c55e" : s.fwdPe > 35 ? "#f59e0b" : "#b8c5d6";
+            const hovered = hoverTicker === s.ticker;
+            const rowBg = hovered
+              ? "rgba(59,130,246,.08)"
+              : i % 2 === 0
+                ? "rgba(17,24,34,.4)"
+                : "transparent";
             return (
               <tr
                 key={s.ticker}
-                title={s.note || undefined}
+                onClick={() => onSelect(s)}
+                onMouseEnter={() => setHoverTicker(s.ticker)}
+                onMouseLeave={() => setHoverTicker(null)}
+                title={s.note ? "Klikni pro detail (obsahuje poznámku)" : "Klikni pro detail"}
                 style={{
-                  background: i % 2 === 0 ? "rgba(17,24,34,.4)" : "transparent",
+                  background: rowBg,
                   borderBottom: "1px solid #141c28",
+                  cursor: "pointer",
+                  transition: "background .1s",
                 }}
               >
-                <td style={{ padding: "7px 8px", fontWeight: 700, color: "#60a5fa" }}>{s.ticker}</td>
+                <td style={{ padding: "7px 8px", fontWeight: 700, color: "#60a5fa", whiteSpace: "nowrap" }}>
+                  {s.ticker}
+                  {s.note && (
+                    <span
+                      title="Obsahuje poznámku"
+                      style={{
+                        display: "inline-block",
+                        width: 5,
+                        height: 5,
+                        borderRadius: "50%",
+                        background: "#60a5fa",
+                        marginLeft: 6,
+                        verticalAlign: "middle",
+                      }}
+                    />
+                  )}
+                </td>
                 <td style={{ padding: "7px 8px", color: "#d0d8e4" }}>
                   {s.name}
                   {s.currency === "EUR" ? " (€)" : ""}
@@ -125,15 +158,11 @@ export function StockTable({ stocks }: StockTableProps) {
                 <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: "#e8edf3" }}>
                   {formatPrice(s.price, s.currency)}
                 </td>
-                <td style={{ padding: "7px 8px", textAlign: "right", color: peColor }}>{formatPe(s.pe)}</td>
                 <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: fwdColor }}>
                   {formatPe(s.fwdPe)}
                 </td>
                 <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, ...gainColor(s.gain52w) }}>
                   {formatPct(s.gain52w)}
-                </td>
-                <td style={{ padding: "7px 8px", textAlign: "right" }}>
-                  {formatPrice(s.avgTarget, s.currency)}
                 </td>
                 <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, ...gainColor(u) }}>
                   {u != null ? formatPct(u) : "—"}

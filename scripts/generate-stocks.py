@@ -18,30 +18,18 @@ except ImportError:
     sys.exit(1)
 
 
-# (ticker_in_app, yfinance_symbol, display_name, sector, currency)
+# Just the app ticker — name and sector are fetched automatically from yfinance.
+# For stocks where the Yahoo Finance symbol differs, add an entry to YF_SYMBOL_OVERRIDE.
+# For non-USD stocks, add an entry to CURRENCY_OVERRIDE.
 STOCKS = [
-    ("MU",    "MU",     "Micron",       "Semicon",   "USD"),
-    ("MSFT",  "MSFT",   "Microsoft",    "Software",  "USD"),
-    ("META",  "META",   "Meta",         "Media",     "USD"),
-    ("GOOGL", "GOOGL",  "Alphabet",     "Media",     "USD"),
-    ("NVDA",  "NVDA",   "Nvidia",       "Semicon",   "USD"),
-    ("AMD",   "AMD",    "AMD",          "Semicon",   "USD"),
-    ("TSM",   "TSM",    "TSMC",         "Semicon",   "USD"),
-    ("AVGO",  "AVGO",   "Broadcom",     "Semicon",   "USD"),
-    ("KLAC",  "KLAC",   "KLA",          "Equip",     "USD"),
-    ("AMAT",  "AMAT",   "Applied Mat.", "Equip",     "USD"),
-    ("LRCX",  "LRCX",   "Lam Research", "Equip",     "USD"),
-    ("ASML",  "ASML",   "ASML",         "Equip",     "USD"),
-    ("V",     "V",      "Visa",         "Payments",  "USD"),
-    ("MA",    "MA",     "Mastercard",   "Payments",  "USD"),
-    ("DUOL",  "DUOL",   "Duolingo",     "Software",  "USD"),
-    ("DSY",   "DSY.PA", "Dassault",     "Software",  "EUR"),
-    ("FICO",  "FICO",   "FICO",         "Software",  "USD"),
-    ("SPGI",  "SPGI",   "S&P Global",   "FinData",   "USD"),
-    ("MCO",   "MCO",    "Moody's",      "FinData",   "USD"),
-    ("GE",    "GE",     "GE Aerospace", "Aerospace", "USD"),
-    ("AMZN",  "AMZN",   "Amazon",       "Cloud",     "USD"),
+    "MU", "MSFT", "META", "GOOGL", "NVDA", "AMD", "TSM", "AVGO",
+    "KLAC", "AMAT", "LRCX", "ASML", "V", "MA", "DUOL",
+    "DSY", "FICO", "SPGI", "MCO", "GE", "AMZN", "NFLX"
 ]
+
+YF_SYMBOL_OVERRIDE = {
+    "DSY": "DSY.PA",
+}
 
 RATING_MAP = {
     "strong_buy":   "Strong Buy",
@@ -97,12 +85,38 @@ def get_fx_rate(pair: str) -> float | None:
         return None
 
 
-def fetch_stock(ticker, yf_symbol, name, sector, currency, fx_to_usd: float):
+def get_analyst_breakdown(t) -> dict | None:
+    """Fetch current-month analyst buy/hold/sell breakdown from recommendations_summary."""
+    try:
+        df = t.recommendations_summary
+        if df is None or df.empty:
+            return None
+        row = df.iloc[0]
+        result = {
+            "strongBuy": int(row.get("strongBuy", 0) or 0),
+            "buy": int(row.get("buy", 0) or 0),
+            "hold": int(row.get("hold", 0) or 0),
+            "sell": int(row.get("sell", 0) or 0),
+            "strongSell": int(row.get("strongSell", 0) or 0),
+        }
+        if sum(result.values()) == 0:
+            return None
+        return result
+    except Exception:
+        return None
+
+
+def fetch_stock(ticker: str, yf_symbol: str, fx_rates: dict[str, float]) -> dict:
     t = yf.Ticker(yf_symbol)
     info = t.info
 
+    name = info.get("longName") or info.get("shortName") or ticker
+    sector = info.get("sector") or info.get("industry") or "Other"
+    currency = info.get("currency") or "USD"
+
     price = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
     market_cap_local = info.get("marketCap")
+    fx_to_usd = fx_rates.get(currency, 1.0)
     market_cap_usd_b = (
         billions(market_cap_local * fx_to_usd)
         if market_cap_local is not None and currency != "USD"
@@ -131,6 +145,7 @@ def fetch_stock(ticker, yf_symbol, name, sector, currency, fx_to_usd: float):
         "targetHigh": num(info.get("targetHighPrice")),
         "targetLow": num(info.get("targetLowPrice")),
         "numAnalysts": info.get("numberOfAnalystOpinions"),
+        "analystBreakdown": get_analyst_breakdown(t),
         "sources": [f"https://finance.yahoo.com/quote/{yf_symbol}"],
         "updatedAt": date.today().isoformat(),
     }
@@ -138,18 +153,21 @@ def fetch_stock(ticker, yf_symbol, name, sector, currency, fx_to_usd: float):
 
 def main():
     sys.stderr.write("Fetching FX rates...\n")
-    eur_usd = get_fx_rate("EURUSD=X") or 1.08
-    sys.stderr.write(f"  EUR/USD = {eur_usd:.4f}\n")
+    fx_rates = {
+        "EUR": get_fx_rate("EURUSD=X") or 1.08,
+        "GBP": get_fx_rate("GBPUSD=X") or 1.27,
+    }
+    for code, rate in fx_rates.items():
+        sys.stderr.write(f"  {code}/USD = {rate:.4f}\n")
 
     sys.stderr.write("Fetching stocks from yfinance...\n")
     stocks = []
-    for row in STOCKS:
-        ticker = row[0]
-        fx = eur_usd if row[4] == "EUR" else 1.0
-        sys.stderr.write(f"  {ticker:5s} ({row[1]})... ")
+    for ticker in STOCKS:
+        yf_symbol = YF_SYMBOL_OVERRIDE.get(ticker, ticker)
+        sys.stderr.write(f"  {ticker:5s} ({yf_symbol})... ")
         sys.stderr.flush()
         try:
-            stocks.append(fetch_stock(*row, fx_to_usd=fx))
+            stocks.append(fetch_stock(ticker, yf_symbol, fx_rates))
             sys.stderr.write("ok\n")
         except Exception as e:
             sys.stderr.write(f"ERR: {e}\n")

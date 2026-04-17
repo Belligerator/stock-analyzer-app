@@ -22,6 +22,13 @@ export interface Stock {
   targetHigh?: number | null;
   targetLow?: number | null;
   numAnalysts?: number | null;
+  analystBreakdown?: {
+    strongBuy: number;
+    buy: number;
+    hold: number;
+    sell: number;
+    strongSell: number;
+  } | null;
   note?: string;
   sources?: string[];
   updatedAt?: string;
