@@ -1,36 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
-import type { StocksDataset } from "./types/stocks";
+import type { NotesFile, StocksDataset } from "./types/stocks";
 import { Header } from "./components/Header";
 import { SectorFilter } from "./components/SectorFilter";
 import { StockTable } from "./components/StockTable";
 import { Legend } from "./components/Legend";
 
-const DATA_URL = `${import.meta.env.BASE_URL}data/stocks.json`;
+const STOCKS_URL = `${import.meta.env.BASE_URL}data/stocks.json`;
+const NOTES_URL = `${import.meta.env.BASE_URL}data/notes.json`;
 
 export default function App() {
   const [data, setData] = useState<StocksDataset | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
 
   useEffect(() => {
-    fetch(DATA_URL)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json() as Promise<StocksDataset>;
+    const stocksReq = fetch(STOCKS_URL).then(r => {
+      if (!r.ok) throw new Error(`stocks.json HTTP ${r.status}`);
+      return r.json() as Promise<StocksDataset>;
+    });
+
+    const notesReq = fetch(NOTES_URL)
+      .then(r => (r.ok ? (r.json() as Promise<NotesFile>) : { notes: {} } as NotesFile))
+      .catch(() => ({ notes: {} } as NotesFile));
+
+    Promise.all([stocksReq, notesReq])
+      .then(([stocks, notesFile]) => {
+        setData(stocks);
+        const sanitized: Record<string, string> = {};
+        for (const [ticker, note] of Object.entries(notesFile.notes ?? {})) {
+          if (typeof note === "string" && note.trim().length > 0) {
+            sanitized[ticker] = note;
+          }
+        }
+        setNotes(sanitized);
       })
-      .then(setData)
       .catch((e: Error) => setError(e.message));
   }, []);
+
+  const mergedStocks = useMemo(() => {
+    if (!data) return [];
+    return data.stocks.map(s => (notes[s.ticker] ? { ...s, note: notes[s.ticker] } : s));
+  }, [data, notes]);
 
   const sectors = useMemo(
     () => (data ? ["All", ...Array.from(new Set(data.stocks.map(s => s.sector)))] : ["All"]),
     [data]
   );
 
-  const filtered = useMemo(() => {
-    if (!data) return [];
-    return filter === "All" ? data.stocks : data.stocks.filter(s => s.sector === filter);
-  }, [data, filter]);
+  const filtered = useMemo(
+    () => (filter === "All" ? mergedStocks : mergedStocks.filter(s => s.sector === filter)),
+    [mergedStocks, filter]
+  );
 
   return (
     <div
@@ -54,7 +75,7 @@ export default function App() {
             <Header dataAsOf={data.dataAsOf} sources={data.sources} />
             <SectorFilter sectors={sectors} value={filter} onChange={setFilter} />
             <StockTable stocks={filtered} />
-            <Legend stocks={data.stocks} disclaimer={data.disclaimer} />
+            <Legend stocks={mergedStocks} disclaimer={data.disclaimer} />
           </>
         )}
       </div>

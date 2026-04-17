@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude backup + editor
+.stock-dashboard.jsx.bak
+.claude/
+.vercel/

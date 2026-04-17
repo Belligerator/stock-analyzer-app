@@ -13,6 +13,15 @@ export interface Stock {
   gain52w: number | null;
   avgTarget: number | null;
   cons: Consensus;
+  marketCap?: number | null;
+  revenueGrowthYoY?: number | null;
+  profitMargin?: number | null;
+  roe?: number | null;
+  debtToEquity?: number | null;
+  peg?: number | null;
+  targetHigh?: number | null;
+  targetLow?: number | null;
+  numAnalysts?: number | null;
   note?: string;
   sources?: string[];
   updatedAt?: string;
@@ -23,4 +32,9 @@ export interface StocksDataset {
   sources: string[];
   disclaimer?: string;
   stocks: Stock[];
+}
+
+export interface NotesFile {
+  generatedAt: string | null;
+  notes: Record<string, string>;
 }
