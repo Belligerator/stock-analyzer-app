@@ -1,3 +1,5 @@
+"use client";
+
 interface SectorFilterProps {
   sectors: string[];
   value: string;

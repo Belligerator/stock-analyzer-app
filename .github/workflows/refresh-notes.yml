@@ -1,0 +1,35 @@
+name: Refresh AI notes
+
+on:
+  schedule:
+    # Weekly on Saturday at 06:00 UTC (= 07:00 SEČ / 08:00 SELČ)
+    # Běží 3 hodiny po denním refresh-stocks, takže recentContext je čerstvý z dnešního rána.
+    - cron: '0 6 * * 6'
+  workflow_dispatch: # manual trigger from GitHub UI
+
+concurrency:
+  group: refresh-notes
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Call Vercel cron endpoint
+        env:
+          URL: ${{ secrets.VERCEL_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "Missing VERCEL_URL or CRON_SECRET in repo secrets" >&2
+            exit 1
+          fi
+          response=$(curl -sS --max-time 300 -w "\n%{http_code}" -H "Authorization: Bearer $SECRET" "$URL/api/cron/refresh-notes")
+          body=$(echo "$response" | sed '$d')
+          code=$(echo "$response" | tail -n1)
+          echo "$body"
+          if [ "$code" != "200" ]; then
+            echo "HTTP $code" >&2
+            exit 1
+          fi

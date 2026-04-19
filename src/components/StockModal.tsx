@@ -1,6 +1,8 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { Stock } from "../types/stocks";
-import { formatPe, formatPct, formatPrice, upside } from "../utils/format";
+import { formatDateTime, formatPe, formatPct, formatPrice, upside } from "../utils/format";
 
 interface StockModalProps {
   stock: Stock | null;
@@ -636,10 +638,55 @@ export function StockModal({ stock, onClose }: StockModalProps) {
                 fontSize: 12,
                 lineHeight: 1.6,
                 color: "#b8c5d6",
+                whiteSpace: "pre-wrap",
               }}
             >
               {stock.note}
             </div>
+            {stock.newsSources && stock.newsSources.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "#556677",
+                    marginBottom: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: ".06em",
+                  }}
+                >
+                  Zdroje z Yahoo (recent news)
+                </div>
+                <ol style={{ margin: 0, paddingLeft: 18, fontSize: 10.5, lineHeight: 1.7, color: "#94a3b8" }}>
+                  {stock.newsSources.map((n, i) => {
+                    const date = n.publishedAt
+                      ? new Date(n.publishedAt).toLocaleDateString("cs-CZ", {
+                          day: "numeric",
+                          month: "numeric",
+                          year: "numeric",
+                        })
+                      : "";
+                    const shortTitle = n.title.length > 70 ? n.title.slice(0, 70) + "…" : n.title;
+                    return (
+                      <li key={`${i}-${n.link}`}>
+                        <a
+                          href={n.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={n.title}
+                          style={{ color: "#60a5fa", textDecoration: "none" }}
+                        >
+                          {n.publisher || "Zdroj"}
+                          {date ? ` (${date})` : ""}
+                        </a>
+                        {n.title && (
+                          <span style={{ color: "#556677", marginLeft: 6 }}>— {shortTitle}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            )}
           </>
         )}
 
@@ -648,7 +695,7 @@ export function StockModal({ stock, onClose }: StockModalProps) {
         <div style={{ fontSize: 10, color: "#778899", lineHeight: 1.8 }}>
           <div>
             <span style={{ color: "#556677" }}>Aktualizováno:</span>{" "}
-            {stock.updatedAt ?? "—"}
+            {formatDateTime(stock.updatedAt)}
           </div>
           {stock.sources && stock.sources.length > 0 && (
             <div>

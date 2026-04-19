@@ -31,6 +31,12 @@ export interface Stock {
   } | null;
   note?: string;
   sources?: string[];
+  newsSources?: Array<{
+    title: string;
+    publisher: string;
+    link: string;
+    publishedAt: string;
+  }>;
   updatedAt?: string;
 }
 
@@ -44,4 +50,49 @@ export interface StocksDataset {
 export interface NotesFile {
   generatedAt: string | null;
   notes: Record<string, string>;
+}
+
+export interface RecentContextNews {
+  title: string;
+  publisher: string;
+  link: string;
+  publishedAt: string;
+}
+
+export interface RecentContextSigDev {
+  headline: string;
+  date: string;
+}
+
+export interface RecentContextResearchReport {
+  title: string;
+  provider: string;
+  investmentRating: string | null;
+  targetPrice: number | null;
+  reportDate: string;
+  contentText: string;
+}
+
+export interface RecentContextUpgrade {
+  firm: string;
+  action: string;
+  fromGrade: string;
+  toGrade: string;
+  date: string;
+}
+
+export interface RecentContextRecommendation {
+  rating: string;
+  targetPrice: number | null;
+  provider: string;
+}
+
+export interface RecentContext {
+  news: RecentContextNews[];
+  sigDevs: RecentContextSigDev[];
+  researchReports: RecentContextResearchReport[];
+  upgrades: RecentContextUpgrade[];
+  recommendation: RecentContextRecommendation | null;
+  nextEarnings: string | null;
+  fetchedAt: string;
 }

@@ -1,0 +1,34 @@
+name: Refresh stocks
+
+on:
+  schedule:
+    # Daily at 03:00 UTC (≈ 5:00 SELČ / 4:00 SEČ)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # manual trigger from GitHub UI
+
+concurrency:
+  group: refresh-stocks
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call Vercel cron endpoint
+        env:
+          URL: ${{ secrets.VERCEL_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$SECRET" ]; then
+            echo "Missing VERCEL_URL or CRON_SECRET in repo secrets" >&2
+            exit 1
+          fi
+          response=$(curl -sS --max-time 300 -w "\n%{http_code}" -H "Authorization: Bearer $SECRET" "$URL/api/cron/refresh-stocks")
+          body=$(echo "$response" | sed '$d')
+          code=$(echo "$response" | tail -n1)
+          echo "$body"
+          if [ "$code" != "200" ]; then
+            echo "HTTP $code" >&2
+            exit 1
+          fi

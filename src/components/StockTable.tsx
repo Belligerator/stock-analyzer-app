@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import type { Stock } from "../types/stocks";
 import { upside, formatPrice, formatPe, formatPct, gainColor } from "../utils/format";

@@ -10,7 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.next
+out
 *.local
+
+# env
+.env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -27,3 +34,9 @@ dist-ssr
 .stock-dashboard.jsx.bak
 .claude/
 .vercel/
+
+# Legacy Vite migration (to remove after porting)
+_legacy_src/
+
+# Payload generated
+src/payload-types.ts
