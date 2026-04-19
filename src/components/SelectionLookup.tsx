@@ -61,7 +61,12 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
 
   useEffect(() => {
     if (!popover) return;
+    let active = false;
+    const armTimer = setTimeout(() => {
+      active = true;
+    }, 150);
     function onDown(e: MouseEvent) {
+      if (!active) return;
       if (!popoverRef.current) return;
       if (!popoverRef.current.contains(e.target as Node)) {
         setPopover(null);
@@ -73,6 +78,7 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
+      clearTimeout(armTimer);
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
@@ -118,6 +124,31 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const MARGIN = 8;
+  const BTN_SIZE = 22;
+  const POP_W = 340;
+  const POP_H_ESTIMATE = 160;
+
+  let btnTop = 0;
+  let btnLeft = 0;
+  if (button) {
+    btnTop = Math.min(Math.max(MARGIN, button.anchorY - 2), vh - BTN_SIZE - MARGIN);
+    btnLeft = Math.min(button.anchorX + 6, vw - BTN_SIZE - MARGIN);
+    if (btnLeft < MARGIN) btnLeft = MARGIN;
+  }
+
+  let popTop = 0;
+  let popLeft = 0;
+  if (popover) {
+    const preferBelow = popover.anchorY + 22 + POP_H_ESTIMATE <= vh - MARGIN;
+    popTop = preferBelow ? popover.anchorY + 22 : Math.max(MARGIN, popover.anchorY - POP_H_ESTIMATE - 6);
+    if (popTop + POP_H_ESTIMATE > vh - MARGIN) popTop = Math.max(MARGIN, vh - POP_H_ESTIMATE - MARGIN);
+    const rawLeft = popover.anchorX - POP_W / 2;
+    popLeft = Math.min(Math.max(MARGIN, rawLeft), vw - POP_W - MARGIN);
+  }
+
   return createPortal(
     <>
       {button && !popover && (
@@ -125,18 +156,19 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             openLookup();
           }}
           title={`Vysvětlit: ${button.term}`}
           style={{
             position: 'fixed',
-            top: button.anchorY - 2,
-            left: button.anchorX + 6,
-            width: 22,
-            height: 22,
+            top: btnTop,
+            left: btnLeft,
+            width: BTN_SIZE,
+            height: BTN_SIZE,
             borderRadius: 11,
             border: '1px solid #3b82f6',
-            background: 'rgba(59, 130, 246, 0.15)',
+            background: 'rgba(59, 130, 246, 0.9)',
             color: '#93c5fd',
             fontSize: 12,
             lineHeight: 1,
@@ -156,12 +188,13 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
       {popover && (
         <div
           ref={popoverRef}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
-            top: popover.anchorY + 22,
-            left: Math.max(8, popover.anchorX - 160),
-            width: 340,
-            maxWidth: 'calc(100vw - 16px)',
+            top: popTop,
+            left: popLeft,
+            width: POP_W,
+            maxWidth: `calc(100vw - ${MARGIN * 2}px)`,
             background: 'rgba(10, 18, 28, 0.98)',
             border: '1px solid #223344',
             borderRadius: 6,
