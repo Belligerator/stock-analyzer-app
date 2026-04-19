@@ -93,11 +93,7 @@ export function BulkRefreshButtons() {
     setState({ status: 'running', kind, startedAt: Date.now() });
     try {
       const result = await callAction(kind);
-      setState(
-        result.ok
-          ? { status: 'ok', message: result.message }
-          : { status: 'error', message: result.message }
-      );
+      setState(result.ok ? { status: 'ok', message: result.message } : { status: 'error', message: result.message });
       if (result.ok) {
         setTimeout(() => window.location.reload(), 1500);
       }
@@ -125,9 +121,7 @@ export function BulkRefreshButtons() {
         background: 'var(--theme-elevation-50)',
       }}
     >
-      <strong style={{ fontSize: 12, color: 'var(--theme-text)', marginRight: 4 }}>
-        Bulk actions:
-      </strong>
+      <strong style={{ fontSize: 12, color: 'var(--theme-text)', marginRight: 4 }}>Bulk actions:</strong>
       <button
         type="button"
         onClick={() => run('refresh-stocks')}
@@ -147,14 +141,10 @@ export function BulkRefreshButtons() {
         {runningNotes ? 'Generating AI notes…' : 'Regenerate all AI notes'}
       </button>
       {state.status === 'ok' && (
-        <span style={{ color: '#22c55e', fontSize: 11, marginLeft: 4 }}>
-          ✓ {state.message}
-        </span>
+        <span style={{ color: '#22c55e', fontSize: 11, marginLeft: 4 }}>✓ {state.message}</span>
       )}
       {state.status === 'error' && (
-        <span style={{ color: '#ef4444', fontSize: 11, marginLeft: 4 }}>
-          ✗ {state.message}
-        </span>
+        <span style={{ color: '#ef4444', fontSize: 11, marginLeft: 4 }}>✗ {state.message}</span>
       )}
       {running && (
         <span style={{ color: 'var(--theme-text-dim)', fontSize: 11, marginLeft: 4 }}>

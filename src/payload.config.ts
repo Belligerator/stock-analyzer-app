@@ -7,6 +7,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { Users } from './collections/Users';
 import { Stocks } from './collections/Stocks';
 import { PriceHistory } from './collections/PriceHistory';
+import { Explanations } from './collections/Explanations';
 import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
@@ -20,7 +21,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Stocks, PriceHistory],
+  collections: [Users, Stocks, PriceHistory, Explanations],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

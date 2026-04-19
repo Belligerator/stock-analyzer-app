@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
     pagination: false,
   });
 
-  const prices = (docs as Array<{ date: string; close: number }>).map(d => ({
+  const prices = (docs as Array<{ date: string; close: number }>).map((d) => ({
     date: d.date,
     close: d.close,
   }));

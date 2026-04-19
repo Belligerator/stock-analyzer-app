@@ -25,7 +25,7 @@ type RefreshNotesResponse = {
 
 async function callAction(
   endpoint: 'refresh-stocks' | 'refresh-notes',
-  ticker: string
+  ticker: string,
 ): Promise<{ ok: boolean; message: string }> {
   const res = await fetch(`/api/actions/${endpoint}`, {
     method: 'POST',
@@ -51,8 +51,7 @@ async function callAction(
 
 export function RefreshStockButton() {
   const info = useDocumentInfo();
-  const doc = (info as unknown as { savedDocumentData?: { ticker?: string; id?: string | number } })
-    .savedDocumentData;
+  const doc = (info as unknown as { savedDocumentData?: { ticker?: string; id?: string | number } }).savedDocumentData;
   const ticker = doc?.ticker;
   const [state, setState] = useState<ActionState>({ status: 'idle' });
 
@@ -65,11 +64,7 @@ export function RefreshStockButton() {
     });
     try {
       const result = await callAction(kind, ticker);
-      setState(
-        result.ok
-          ? { status: 'ok', message: result.message }
-          : { status: 'error', message: result.message }
-      );
+      setState(result.ok ? { status: 'ok', message: result.message } : { status: 'error', message: result.message });
       if (result.ok) {
         setTimeout(() => window.location.reload(), 900);
       }
@@ -90,32 +85,14 @@ export function RefreshStockButton() {
         flexWrap: 'wrap',
       }}
     >
-      <button
-        type="button"
-        onClick={() => run('refresh-stocks')}
-        disabled={running}
-        style={buttonStyle(running)}
-      >
-        {state.status === 'running' && state.label === 'Refreshing…'
-          ? state.label
-          : 'Refresh metrics'}
+      <button type="button" onClick={() => run('refresh-stocks')} disabled={running} style={buttonStyle(running)}>
+        {state.status === 'running' && state.label === 'Refreshing…' ? state.label : 'Refresh metrics'}
       </button>
-      <button
-        type="button"
-        onClick={() => run('refresh-notes')}
-        disabled={running}
-        style={buttonStyle(running)}
-      >
-        {state.status === 'running' && state.label === 'Generating note…'
-          ? state.label
-          : 'Regenerate AI note'}
+      <button type="button" onClick={() => run('refresh-notes')} disabled={running} style={buttonStyle(running)}>
+        {state.status === 'running' && state.label === 'Generating note…' ? state.label : 'Regenerate AI note'}
       </button>
-      {state.status === 'ok' && (
-        <span style={{ color: '#22c55e', fontSize: 12 }}>{state.message}</span>
-      )}
-      {state.status === 'error' && (
-        <span style={{ color: '#ef4444', fontSize: 12 }}>{state.message}</span>
-      )}
+      {state.status === 'ok' && <span style={{ color: '#22c55e', fontSize: 12 }}>{state.message}</span>}
+      {state.status === 'error' && <span style={{ color: '#ef4444', fontSize: 12 }}>{state.message}</span>}
     </div>
   );
 }

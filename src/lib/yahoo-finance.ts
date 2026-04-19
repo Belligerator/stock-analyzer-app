@@ -131,17 +131,10 @@ function pickNum(...vals: Array<number | null | undefined>): number | null {
 export async function fetchStockMetrics(
   yahooSymbol: string,
   currency: string,
-  fxRates: FxRates
+  fxRates: FxRates,
 ): Promise<StockMetrics> {
   const summary = await yf.quoteSummary(yahooSymbol, {
-    modules: [
-      'price',
-      'summaryDetail',
-      'financialData',
-      'defaultKeyStatistics',
-      'assetProfile',
-      'recommendationTrend',
-    ],
+    modules: ['price', 'summaryDetail', 'financialData', 'defaultKeyStatistics', 'assetProfile', 'recommendationTrend'],
   });
 
   const price = summary.price ?? {};
@@ -155,38 +148,34 @@ export async function fetchStockMetrics(
     (price as { longName?: string; shortName?: string }).longName ??
     (price as { longName?: string; shortName?: string }).shortName ??
     undefined;
-  const sector = (ap as { sector?: string; industry?: string }).sector ??
+  const sector =
+    (ap as { sector?: string; industry?: string }).sector ??
     (ap as { sector?: string; industry?: string }).industry ??
     undefined;
 
   const currentPrice = pickNum(
     (fd as { currentPrice?: number }).currentPrice,
     (price as { regularMarketPrice?: number }).regularMarketPrice,
-    (sd as { previousClose?: number }).previousClose
+    (sd as { previousClose?: number }).previousClose,
   );
 
-  const marketCapLocal = pickNum(
-    (price as { marketCap?: number }).marketCap,
-    (sd as { marketCap?: number }).marketCap
-  );
+  const marketCapLocal = pickNum((price as { marketCap?: number }).marketCap, (sd as { marketCap?: number }).marketCap);
   const fxToUsd = fxRates[currency] ?? 1;
   const marketCapUsdB =
-    marketCapLocal != null && currency !== 'USD'
-      ? billions(marketCapLocal * fxToUsd)
-      : billions(marketCapLocal);
+    marketCapLocal != null && currency !== 'USD' ? billions(marketCapLocal * fxToUsd) : billions(marketCapLocal);
 
   const gain52w = pickNum(
     (ks as { fiftyTwoWeekChange?: number; '52WeekChange'?: number }).fiftyTwoWeekChange,
-    (ks as { fiftyTwoWeekChange?: number; '52WeekChange'?: number })['52WeekChange']
+    (ks as { fiftyTwoWeekChange?: number; '52WeekChange'?: number })['52WeekChange'],
   );
   const avgTarget = pickNum(
     (fd as { targetMedianPrice?: number; targetMeanPrice?: number }).targetMedianPrice,
-    (fd as { targetMedianPrice?: number; targetMeanPrice?: number }).targetMeanPrice
+    (fd as { targetMedianPrice?: number; targetMeanPrice?: number }).targetMeanPrice,
   );
 
   const cons = mapConsensus(
     (fd as { recommendationKey?: string }).recommendationKey,
-    (fd as { recommendationMean?: number }).recommendationMean
+    (fd as { recommendationMean?: number }).recommendationMean,
   );
 
   type TrendRow = {
@@ -219,12 +208,7 @@ export async function fetchStockMetrics(
     sector,
     price: round(currentPrice),
     pe: round((sd as { trailingPE?: number }).trailingPE ?? null),
-    fwdPe: round(
-      pickNum(
-        (sd as { forwardPE?: number }).forwardPE,
-        (ks as { forwardPE?: number }).forwardPE
-      )
-    ),
+    fwdPe: round(pickNum((sd as { forwardPE?: number }).forwardPE, (ks as { forwardPE?: number }).forwardPE)),
     gain52w: pct(gain52w),
     avgTarget: round(avgTarget),
     cons,
@@ -233,12 +217,7 @@ export async function fetchStockMetrics(
     profitMargin: pct((fd as { profitMargins?: number }).profitMargins),
     roe: pct((fd as { returnOnEquity?: number }).returnOnEquity),
     debtToEquity: ratioFromPct((fd as { debtToEquity?: number }).debtToEquity),
-    peg: round(
-      pickNum(
-        (ks as { pegRatio?: number }).pegRatio,
-        (ks as { trailingPegRatio?: number }).trailingPegRatio
-      )
-    ),
+    peg: round(pickNum((ks as { pegRatio?: number }).pegRatio, (ks as { trailingPegRatio?: number }).trailingPegRatio)),
     targetHigh: round((fd as { targetHighPrice?: number }).targetHighPrice ?? null),
     targetLow: round((fd as { targetLowPrice?: number }).targetLowPrice ?? null),
     numAnalysts: (fd as { numberOfAnalystOpinions?: number }).numberOfAnalystOpinions ?? null,
@@ -248,7 +227,7 @@ export async function fetchStockMetrics(
 }
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function toYmd(d: Date): string {
@@ -267,13 +246,12 @@ export async function fetchHistoricalPrices(
   yahooSymbol: string,
   period1: Date,
   period2: Date,
-  interval: '1d' | '1wk'
+  interval: '1d' | '1wk',
 ): Promise<HistoricalPricePoint[]> {
   const rows = await yf.historical(yahooSymbol, { period1, period2, interval });
   const out: HistoricalPricePoint[] = [];
   for (const row of rows) {
-    const close = (row as { close?: number; adjClose?: number }).close ??
-      (row as { adjClose?: number }).adjClose;
+    const close = (row as { close?: number; adjClose?: number }).close ?? (row as { adjClose?: number }).adjClose;
     const date = (row as { date?: Date | string }).date;
     if (typeof close !== 'number' || !Number.isFinite(close)) continue;
     if (!date) continue;
@@ -339,7 +317,7 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
 
   const news: RecentContextNews[] =
     searchResult.status === 'fulfilled'
-      ? (searchResult.value.news ?? []).slice(0, newsLimit).map(n => ({
+      ? (searchResult.value.news ?? []).slice(0, newsLimit).map((n) => ({
           title: n.title ?? '',
           publisher: n.publisher ?? '',
           link: n.link ?? '',
@@ -381,10 +359,7 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
     if (ins.recommendation) {
       recommendation = {
         rating: ins.recommendation.rating ?? '',
-        targetPrice:
-          typeof ins.recommendation.targetPrice === 'number'
-            ? ins.recommendation.targetPrice
-            : null,
+        targetPrice: typeof ins.recommendation.targetPrice === 'number' ? ins.recommendation.targetPrice : null,
         provider: ins.recommendation.provider ?? '',
       };
     }
@@ -402,7 +377,7 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
       epochGradeDate?: Date | number;
     }>;
     const sorted = [...history]
-      .filter(h => h.epochGradeDate)
+      .filter((h) => h.epochGradeDate)
       .sort((a, b) => {
         const av = a.epochGradeDate instanceof Date ? a.epochGradeDate.getTime() : Number(a.epochGradeDate);
         const bv = b.epochGradeDate instanceof Date ? b.epochGradeDate.getTime() : Number(b.epochGradeDate);

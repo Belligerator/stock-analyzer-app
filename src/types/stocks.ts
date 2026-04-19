@@ -1,6 +1,6 @@
-export type Consensus = "Strong Buy" | "Buy" | "Hold" | "Sell" | "Strong Sell";
+export type Consensus = 'Strong Buy' | 'Buy' | 'Hold' | 'Sell' | 'Strong Sell';
 
-export type Currency = "USD" | "EUR";
+export type Currency = 'USD' | 'EUR';
 
 export interface Stock {
   ticker: string;

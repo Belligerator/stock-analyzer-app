@@ -3,10 +3,9 @@ import Anthropic from '@anthropic-ai/sdk';
 export type Priority = 'skip' | 'normal' | 'high';
 
 export const MODEL_TRIGGER = process.env.MODEL_TRIGGER || 'claude-haiku-4-5';
-export const MODEL_ANALYZE_NORMAL =
-  process.env.MODEL_ANALYZE_NORMAL || 'claude-sonnet-4-6';
-export const MODEL_ANALYZE_HIGH =
-  process.env.MODEL_ANALYZE_HIGH || 'claude-opus-4-7';
+export const MODEL_ANALYZE_NORMAL = process.env.MODEL_ANALYZE_NORMAL || 'claude-sonnet-4-6';
+export const MODEL_ANALYZE_HIGH = process.env.MODEL_ANALYZE_HIGH || 'claude-opus-4-7';
+export const MODEL_EXPLAIN = process.env.MODEL_EXPLAIN || 'claude-haiku-4-5';
 
 function readInt(name: string, fallback: number): number {
   const raw = process.env[name];

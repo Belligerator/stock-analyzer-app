@@ -27,9 +27,7 @@ export async function POST(req: NextRequest) {
     // no body or invalid JSON — run for all active
   }
 
-  console.log(
-    `[actions:refresh-stocks] triggered${tickers ? ` for [${tickers.join(',')}]` : ' (all active)'}`
-  );
+  console.log(`[actions:refresh-stocks] triggered${tickers ? ` for [${tickers.join(',')}]` : ' (all active)'}`);
   try {
     const summary = await refreshStocks({ tickers });
     return NextResponse.json({ ok: true, ...summary });

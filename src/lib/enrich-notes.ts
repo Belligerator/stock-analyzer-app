@@ -72,7 +72,7 @@ export type EnrichSummary = {
  */
 export function hasFreshSources(
   ctx: RecentContext | null | undefined,
-  noteUpdatedAt: string | null | undefined
+  noteUpdatedAt: string | null | undefined,
 ): boolean {
   if (!noteUpdatedAt) return true;
   if (!ctx) return true;
@@ -155,10 +155,7 @@ function extractJsonArray(text: string): string {
   return candidate.slice(first, last + 1);
 }
 
-function validateTriggerResults(
-  arr: unknown,
-  validTickers: Set<string>
-): TriggerResult[] {
+function validateTriggerResults(arr: unknown, validTickers: Set<string>): TriggerResult[] {
   if (!Array.isArray(arr)) throw new Error('Trigger output is not an array');
   const out: TriggerResult[] = [];
   for (const item of arr) {
@@ -178,7 +175,7 @@ function validateTriggerResults(
 function extractText(response: Anthropic.Messages.Message): string {
   return response.content
     .filter((b): b is Extract<typeof b, { type: 'text' }> => b.type === 'text')
-    .map(b => b.text)
+    .map((b) => b.text)
     .join('\n')
     .trim();
 }
@@ -191,12 +188,15 @@ function cleanNoteOutput(raw: string): string {
     text = text.slice(1, -1).trim();
   }
   text = text.replace(/<\/?cite\b[^>]*>/gi, '');
-  text = text.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+  text = text
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .trim();
   return text;
 }
 
 function buildTriagePayload(
-  stocks: Array<{ viewModel: ReturnType<typeof mapStockDoc>; recentContext: RecentContext | null }>
+  stocks: Array<{ viewModel: ReturnType<typeof mapStockDoc>; recentContext: RecentContext | null }>,
 ): string {
   return JSON.stringify(
     {
@@ -226,7 +226,7 @@ function buildTriagePayload(
       })),
     },
     null,
-    2
+    2,
   );
 }
 
@@ -240,9 +240,7 @@ type EnrichedStock = {
 
 async function loadStocksForPipeline(options: { tickers?: string[] }): Promise<EnrichedStock[]> {
   const payload = await getPayload({ config });
-  const where: Where = options.tickers
-    ? { ticker: { in: options.tickers } }
-    : { active: { equals: true } };
+  const where: Where = options.tickers ? { ticker: { in: options.tickers } } : { active: { equals: true } };
 
   const { docs } = await payload.find({
     collection: 'stocks',
@@ -251,22 +249,16 @@ async function loadStocksForPipeline(options: { tickers?: string[] }): Promise<E
     depth: 0,
   });
 
-  return docs.map(doc => ({
+  return docs.map((doc) => ({
     id: doc.id as string | number,
     ticker: doc.ticker as string,
-    noteUpdatedAt: ((doc as { noteUpdatedAt?: string | null }).noteUpdatedAt ?? null) as
-      | string
-      | null,
-    recentContext: ((doc as { recentContext?: RecentContext | null }).recentContext ?? null) as
-      | RecentContext
-      | null,
+    noteUpdatedAt: ((doc as { noteUpdatedAt?: string | null }).noteUpdatedAt ?? null) as string | null,
+    recentContext: ((doc as { recentContext?: RecentContext | null }).recentContext ?? null) as RecentContext | null,
     viewModel: mapStockDoc(doc as unknown as Parameters<typeof mapStockDoc>[0]),
   }));
 }
 
-export async function detectTriggers(
-  enriched: EnrichedStock[]
-): Promise<{
+export async function detectTriggers(enriched: EnrichedStock[]): Promise<{
   triggers: TriggerResult[];
   usage: UsageStats;
 }> {
@@ -274,11 +266,9 @@ export async function detectTriggers(
     return { triggers: [], usage: { ...zeroUsage } };
   }
 
-  const validTickers = new Set(enriched.map(e => e.viewModel.ticker));
+  const validTickers = new Set(enriched.map((e) => e.viewModel.ticker));
 
-  console.log(
-    `[enrich-notes] stage 1 triage start: ${enriched.length} tickers, model=${MODEL_TRIGGER}`
-  );
+  console.log(`[enrich-notes] stage 1 triage start: ${enriched.length} tickers, model=${MODEL_TRIGGER}`);
   const stageStart = Date.now();
 
   const userMessage = `Dataset:\n\n${buildTriagePayload(enriched)}`;
@@ -296,11 +286,11 @@ export async function detectTriggers(
   const triggers = validateTriggerResults(parsed, validTickers);
   const usage = usageStats(MODEL_TRIGGER, response.usage);
 
-  const skipCount = triggers.filter(t => t.priority === 'skip').length;
-  const normalCount = triggers.filter(t => t.priority === 'normal').length;
-  const highCount = triggers.filter(t => t.priority === 'high').length;
+  const skipCount = triggers.filter((t) => t.priority === 'skip').length;
+  const normalCount = triggers.filter((t) => t.priority === 'normal').length;
+  const highCount = triggers.filter((t) => t.priority === 'high').length;
   console.log(
-    `[enrich-notes] stage 1 done in ${Date.now() - stageStart}ms: ${skipCount} skip, ${normalCount} normal, ${highCount} high, ${usage.inputTokens}/${usage.outputTokens} tokens in/out, ${formatUsd(usage.costUsd)}`
+    `[enrich-notes] stage 1 done in ${Date.now() - stageStart}ms: ${skipCount} skip, ${normalCount} normal, ${highCount} high, ${usage.inputTokens}/${usage.outputTokens} tokens in/out, ${formatUsd(usage.costUsd)}`,
   );
 
   return { triggers, usage };
@@ -309,7 +299,7 @@ export async function detectTriggers(
 function buildAnalysisUserMessage(
   stock: ReturnType<typeof mapStockDoc>,
   recentContext: RecentContext | null,
-  trigger: TriggerResult
+  trigger: TriggerResult,
 ): string {
   return JSON.stringify(
     {
@@ -338,14 +328,14 @@ function buildAnalysisUserMessage(
       trigger: { priority: trigger.priority, reason: trigger.reason },
     },
     null,
-    2
+    2,
   );
 }
 
 export async function analyzeTicker(
   stock: ReturnType<typeof mapStockDoc>,
   recentContext: RecentContext | null,
-  trigger: TriggerResult
+  trigger: TriggerResult,
 ): Promise<AnalysisResult | null> {
   if (trigger.priority === 'skip') return null;
 
@@ -392,9 +382,7 @@ export async function analyzeTicker(
   };
 }
 
-export async function enrichNotes(
-  options: { tickers?: string[] } = {}
-): Promise<EnrichSummary> {
+export async function enrichNotes(options: { tickers?: string[] } = {}): Promise<EnrichSummary> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY is not set');
   }
@@ -403,7 +391,7 @@ export async function enrichNotes(
   const payload = await getPayload({ config });
 
   console.log(
-    `[enrich-notes] pipeline start${options.tickers ? ` for ${options.tickers.join(',')}` : ' (all active)'}`
+    `[enrich-notes] pipeline start${options.tickers ? ` for ${options.tickers.join(',')}` : ' (all active)'}`,
   );
 
   const loaded = await loadStocksForPipeline(options);
@@ -419,13 +407,11 @@ export async function enrichNotes(
         status: 'pre-skipped',
         reason: 'všechny zdroje starší než noteUpdatedAt',
       });
-      console.log(
-        `[enrich-notes]   ${stock.ticker} pre-skipped (sources older than last note ${stock.noteUpdatedAt})`
-      );
+      console.log(`[enrich-notes]   ${stock.ticker} pre-skipped (sources older than last note ${stock.noteUpdatedAt})`);
     }
   }
   console.log(
-    `[enrich-notes] pre-filter: ${loaded.length} loaded -> ${preSkippedResults.length} pre-skipped (stale sources), ${freshStocks.length} to triage`
+    `[enrich-notes] pre-filter: ${loaded.length} loaded -> ${preSkippedResults.length} pre-skipped (stale sources), ${freshStocks.length} to triage`,
   );
 
   const { triggers, usage: triggerUsage } = await detectTriggers(freshStocks);
@@ -477,9 +463,7 @@ export async function enrichNotes(
       const tickerMs = Date.now() - tickerStart;
       if (!analysis || !analysis.note) {
         skipped++;
-        console.log(
-          `[enrich-notes]   ${trigger.ticker} ${trigger.priority} empty note in ${tickerMs}ms`
-        );
+        console.log(`[enrich-notes]   ${trigger.ticker} ${trigger.priority} empty note in ${tickerMs}ms`);
         results.push({
           ticker: trigger.ticker,
           status: 'skipped',
@@ -500,7 +484,7 @@ export async function enrichNotes(
         `[enrich-notes]   ${trigger.ticker} ${trigger.priority} -> ${analysis.model} ` +
           `${analysis.usage.inputTokens}/${analysis.usage.outputTokens} in/out, ` +
           `${analysis.usage.webSearchRequests}s/${analysis.usage.webFetchRequests}f, ` +
-          `${formatUsd(analysis.usage.costUsd)} in ${tickerMs}ms`
+          `${formatUsd(analysis.usage.costUsd)} in ${tickerMs}ms`,
       );
       results.push({
         ticker: trigger.ticker,
@@ -514,9 +498,7 @@ export async function enrichNotes(
       failed++;
       const tickerMs = Date.now() - tickerStart;
       const message = err instanceof Error ? err.message : String(err);
-      console.log(
-        `[enrich-notes]   ${trigger.ticker} ${trigger.priority} ERROR in ${tickerMs}ms: ${message}`
-      );
+      console.log(`[enrich-notes]   ${trigger.ticker} ${trigger.priority} ERROR in ${tickerMs}ms: ${message}`);
       results.push({
         ticker: trigger.ticker,
         status: 'error',
@@ -531,13 +513,13 @@ export async function enrichNotes(
   const durationMs = Date.now() - start;
 
   console.log(
-    `[enrich-notes] pipeline done in ${durationMs}ms: ${updated} updated, ${skipped} skipped, ${preSkippedResults.length} pre-skipped, ${failed} failed`
+    `[enrich-notes] pipeline done in ${durationMs}ms: ${updated} updated, ${skipped} skipped, ${preSkippedResults.length} pre-skipped, ${failed} failed`,
   );
   console.log(
-    `[enrich-notes] tokens total: ${totalUsage.inputTokens} in / ${totalUsage.outputTokens} out / ${totalUsage.cacheReadTokens} cached / ${totalUsage.webSearchRequests} searches / ${totalUsage.webFetchRequests} fetches`
+    `[enrich-notes] tokens total: ${totalUsage.inputTokens} in / ${totalUsage.outputTokens} out / ${totalUsage.cacheReadTokens} cached / ${totalUsage.webSearchRequests} searches / ${totalUsage.webFetchRequests} fetches`,
   );
   console.log(
-    `[enrich-notes] cost total: ${formatUsd(totalUsage.costUsd)} (triage ${formatUsd(triggerUsage.costUsd)} + analysis ${formatUsd(analysisUsage.costUsd)})`
+    `[enrich-notes] cost total: ${formatUsd(totalUsage.costUsd)} (triage ${formatUsd(triggerUsage.costUsd)} + analysis ${formatUsd(analysisUsage.costUsd)})`,
   );
 
   return {

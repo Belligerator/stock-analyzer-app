@@ -10,11 +10,11 @@ export function Legend({ disclaimer }: LegendProps) {
       style={{
         marginTop: 14,
         padding: 12,
-        background: "rgba(17,24,34,.5)",
+        background: 'rgba(17,24,34,.5)',
         borderRadius: 6,
-        border: "1px solid #1c2533",
+        border: '1px solid #1c2533',
         fontSize: 9,
-        color: "#778899",
+        color: '#778899',
         lineHeight: 1.6,
       }}
     >

@@ -45,7 +45,7 @@ async function latestDateFor(
   payload: Payload,
   ticker: string,
   interval: PriceInterval,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<string | null> {
   const { docs } = await payload.find({
     collection: 'price-history',
@@ -65,16 +65,12 @@ async function trimOlderThan(
   ticker: string,
   interval: PriceInterval,
   cutoffYmd: string,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<number> {
   const res = await payload.delete({
     collection: 'price-history',
     where: {
-      and: [
-        { ticker: { equals: ticker } },
-        { interval: { equals: interval } },
-        { date: { less_than: cutoffYmd } },
-      ],
+      and: [{ ticker: { equals: ticker } }, { interval: { equals: interval } }, { date: { less_than: cutoffYmd } }],
     },
     req,
   });
@@ -86,7 +82,7 @@ async function upsertInterval(
   ticker: string,
   yahooSymbol: string,
   interval: PriceInterval,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<PriceUpdateCounts> {
   const windowYears = interval === 'daily' ? DAILY_WINDOW_YEARS : WEEKLY_WINDOW_YEARS;
   const yahooInterval = interval === 'daily' ? '1d' : '1wk';
@@ -143,7 +139,7 @@ export async function updatePriceHistory(
   ticker: string,
   yahooSymbol: string,
   payload: Payload,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<PriceUpdateSummary> {
   const daily = await upsertInterval(payload, ticker, yahooSymbol, 'daily', req);
   const weekly = await upsertInterval(payload, ticker, yahooSymbol, 'weekly', req);

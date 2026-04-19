@@ -18,10 +18,7 @@ export const PriceHistory: CollectionConfig = {
     update: authedOnly,
     delete: authedOnly,
   },
-  indexes: [
-    { fields: ['ticker', 'date', 'interval'], unique: true },
-    { fields: ['ticker', 'interval', 'date'] },
-  ],
+  indexes: [{ fields: ['ticker', 'date', 'interval'], unique: true }, { fields: ['ticker', 'interval', 'date'] }],
   fields: [
     {
       name: 'ticker',

@@ -1,8 +1,6 @@
 {
   "dataAsOf": "2026-04-17",
-  "sources": [
-    "https://finance.yahoo.com (via yfinance)"
-  ],
+  "sources": ["https://finance.yahoo.com (via yfinance)"],
   "disclaimer": "Není investiční doporučení. Data jsou informativní, ceny se mění v reálném čase.",
   "stocks": [
     {
@@ -32,9 +30,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/MU"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/MU"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -64,9 +60,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/MSFT"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/MSFT"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -96,9 +90,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/META"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/META"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -128,9 +120,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/GOOGL"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/GOOGL"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -160,9 +150,7 @@
         "sell": 1,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/NVDA"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/NVDA"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -192,9 +180,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/AMD"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/AMD"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -224,9 +210,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/TSM"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/TSM"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -256,9 +240,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/AVGO"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/AVGO"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -288,9 +270,7 @@
         "sell": 0,
         "strongSell": 1
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/KLAC"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/KLAC"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -320,9 +300,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/AMAT"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/AMAT"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -352,9 +330,7 @@
         "sell": 0,
         "strongSell": 1
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/LRCX"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/LRCX"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -384,9 +360,7 @@
         "sell": 1,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/ASML"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/ASML"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -416,9 +390,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/V"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/V"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -448,9 +420,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/MA"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/MA"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -480,9 +450,7 @@
         "sell": 1,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/DUOL"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/DUOL"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -512,9 +480,7 @@
         "sell": 2,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/DSY.PA"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/DSY.PA"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -544,9 +510,7 @@
         "sell": 1,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/FICO"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/FICO"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -576,9 +540,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/SPGI"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/SPGI"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -608,9 +570,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/MCO"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/MCO"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -640,9 +600,7 @@
         "sell": 0,
         "strongSell": 1
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/GE"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/GE"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -672,9 +630,7 @@
         "sell": 0,
         "strongSell": 0
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/AMZN"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/AMZN"],
       "updatedAt": "2026-04-17"
     },
     {
@@ -704,9 +660,7 @@
         "sell": 0,
         "strongSell": 1
       },
-      "sources": [
-        "https://finance.yahoo.com/quote/NFLX"
-      ],
+      "sources": ["https://finance.yahoo.com/quote/NFLX"],
       "updatedAt": "2026-04-17"
     }
   ]

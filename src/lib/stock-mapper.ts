@@ -48,8 +48,7 @@ function stripCiteTags(text: string | null | undefined): string | undefined {
 export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
   const bd = doc.analystBreakdown;
   const breakdown =
-    bd &&
-    (toInt(bd.strongBuy) + toInt(bd.buy) + toInt(bd.hold) + toInt(bd.sell) + toInt(bd.strongSell) > 0)
+    bd && toInt(bd.strongBuy) + toInt(bd.buy) + toInt(bd.hold) + toInt(bd.sell) + toInt(bd.strongSell) > 0
       ? {
           strongBuy: toInt(bd.strongBuy),
           buy: toInt(bd.buy),
@@ -81,12 +80,10 @@ export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
     numAnalysts: doc.numAnalysts ?? null,
     analystBreakdown: breakdown,
     note: stripCiteTags(doc.note),
-    sources: (doc.sources ?? [])
-      .map(s => s.url)
-      .filter((u): u is string => typeof u === 'string' && u.length > 0),
+    sources: (doc.sources ?? []).map((s) => s.url).filter((u): u is string => typeof u === 'string' && u.length > 0),
     newsSources: (doc.recentContext?.news ?? [])
-      .filter(n => typeof n.link === 'string' && n.link.length > 0)
-      .map(n => ({
+      .filter((n) => typeof n.link === 'string' && n.link.length > 0)
+      .map((n) => ({
         title: n.title ?? '',
         publisher: n.publisher ?? '',
         link: n.link,

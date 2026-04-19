@@ -70,9 +70,7 @@ export function NotePreview() {
       >
         <strong style={{ fontSize: 12, color: 'var(--theme-text)' }}>AI Note preview</strong>
         {updatedAt && (
-          <span style={{ fontSize: 10, color: 'var(--theme-text-dim)' }}>
-            Last generated: {formatDate(updatedAt)}
-          </span>
+          <span style={{ fontSize: 10, color: 'var(--theme-text-dim)' }}>Last generated: {formatDate(updatedAt)}</span>
         )}
       </div>
       {trimmed ? (

@@ -12,17 +12,11 @@ export function StockDashboard({ dataset }: { dataset: StocksDataset }) {
   const [filter, setFilter] = useState('All');
   const [selected, setSelected] = useState<Stock | null>(null);
 
-  const sectors = useMemo(
-    () => ['All', ...Array.from(new Set(dataset.stocks.map(s => s.sector)))],
-    [dataset.stocks]
-  );
+  const sectors = useMemo(() => ['All', ...Array.from(new Set(dataset.stocks.map((s) => s.sector)))], [dataset.stocks]);
 
   const filtered = useMemo(
-    () =>
-      filter === 'All'
-        ? dataset.stocks
-        : dataset.stocks.filter(s => s.sector === filter),
-    [dataset.stocks, filter]
+    () => (filter === 'All' ? dataset.stocks : dataset.stocks.filter((s) => s.sector === filter)),
+    [dataset.stocks, filter],
   );
 
   return (

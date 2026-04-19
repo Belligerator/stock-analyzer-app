@@ -16,10 +16,10 @@ export default async function FrontendPage() {
     depth: 0,
   });
 
-  const stocks = result.docs.map(doc => mapStockDoc(doc as unknown as Parameters<typeof mapStockDoc>[0]));
+  const stocks = result.docs.map((doc) => mapStockDoc(doc as unknown as Parameters<typeof mapStockDoc>[0]));
 
   const latestUpdate = stocks
-    .map(s => s.updatedAt)
+    .map((s) => s.updatedAt)
     .filter((d): d is string => typeof d === 'string')
     .sort()
     .at(-1);

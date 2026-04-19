@@ -63,10 +63,7 @@ export const Stocks: CollectionConfig = {
                   unique: true,
                   index: true,
                   hooks: {
-                    beforeValidate: [
-                      ({ value }) =>
-                        typeof value === 'string' ? value.trim().toUpperCase() : value,
-                    ],
+                    beforeValidate: [({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value)],
                   },
                   admin: { width: '25%', description: 'App-level ticker (e.g. DSY, NVDA).' },
                 },
@@ -125,7 +122,8 @@ export const Stocks: CollectionConfig = {
         },
         {
           label: 'Metrics',
-          description: 'Populated automatically by the daily refresh cron. Manual edits will be overwritten on the next run.',
+          description:
+            'Populated automatically by the daily refresh cron. Manual edits will be overwritten on the next run.',
           fields: [
             {
               type: 'row',

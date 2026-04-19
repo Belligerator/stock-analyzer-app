@@ -62,16 +62,14 @@ async function main() {
   const [stocksRaw, notesRaw] = await Promise.all([
     readFile(path.join(PROJECT_ROOT, 'public', 'data', 'stocks.json'), 'utf-8'),
     readFile(path.join(PROJECT_ROOT, 'public', 'data', 'notes.json'), 'utf-8').catch(
-      () => '{"generatedAt": null, "notes": {}}'
+      () => '{"generatedAt": null, "notes": {}}',
     ),
   ]);
 
   const stocksData = JSON.parse(stocksRaw) as StocksJson;
   const notesData = JSON.parse(notesRaw) as NotesJson;
 
-  const noteUpdatedAtIso = notesData.generatedAt
-    ? new Date(notesData.generatedAt).toISOString()
-    : null;
+  const noteUpdatedAtIso = notesData.generatedAt ? new Date(notesData.generatedAt).toISOString() : null;
 
   let upserted = 0;
   for (const s of stocksData.stocks) {
@@ -101,7 +99,7 @@ async function main() {
       targetLow: s.targetLow ?? null,
       numAnalysts: s.numAnalysts ?? null,
       analystBreakdown: s.analystBreakdown ?? undefined,
-      sources: (s.sources ?? []).map(url => ({ url })),
+      sources: (s.sources ?? []).map((url) => ({ url })),
       metricsUpdatedAt: s.updatedAt ? new Date(s.updatedAt).toISOString() : null,
       note,
       noteUpdatedAt: note ? noteUpdatedAtIso : null,
@@ -133,7 +131,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

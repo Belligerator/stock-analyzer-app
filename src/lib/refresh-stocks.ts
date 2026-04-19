@@ -1,12 +1,6 @@
 import { getPayload, type Payload, type PayloadRequest, type Where } from 'payload';
 import config from '@payload-config';
-import {
-  fetchFxRates,
-  fetchStockMetrics,
-  fetchTickerContext,
-  sleep,
-  type FxRates,
-} from './yahoo-finance';
+import { fetchFxRates, fetchStockMetrics, fetchTickerContext, sleep, type FxRates } from './yahoo-finance';
 import { updatePriceHistory } from './refresh-prices';
 import type { RecentContext } from '@/types/stocks';
 
@@ -28,15 +22,13 @@ export type RefreshSummary = {
 };
 
 export async function refreshStocks(
-  options: { tickers?: string[]; req?: PayloadRequest } = {}
+  options: { tickers?: string[]; req?: PayloadRequest } = {},
 ): Promise<RefreshSummary> {
   const payload = options.req?.payload ?? (await getPayload({ config }));
   const req = options.req;
   const start = Date.now();
 
-  const where: Where = options.tickers
-    ? { ticker: { in: options.tickers } }
-    : { active: { equals: true } };
+  const where: Where = options.tickers ? { ticker: { in: options.tickers } } : { active: { equals: true } };
 
   const { docs } = await payload.find({
     collection: 'stocks',
@@ -46,19 +38,17 @@ export async function refreshStocks(
     req,
   });
 
-  const currencies = Array.from(
-    new Set(docs.map(d => (d.currency as string | undefined) ?? 'USD'))
-  );
+  const currencies = Array.from(new Set(docs.map((d) => (d.currency as string | undefined) ?? 'USD')));
 
   console.log(
-    `[refresh-stocks] start: ${docs.length} tickers${options.tickers ? ` (${options.tickers.join(',')})` : ' (all active)'}, currencies=${JSON.stringify(currencies)}`
+    `[refresh-stocks] start: ${docs.length} tickers${options.tickers ? ` (${options.tickers.join(',')})` : ' (all active)'}, currencies=${JSON.stringify(currencies)}`,
   );
 
   const fxRates = await fetchFxRates(currencies);
   console.log(
     `[refresh-stocks] fx rates: ${Object.entries(fxRates)
       .map(([k, v]) => `${k}=${v.toFixed(4)}`)
-      .join(', ')}`
+      .join(', ')}`,
   );
 
   const results: RefreshResult[] = [];
@@ -90,26 +80,24 @@ export async function refreshStocks(
 
       const tickerMs = Date.now() - tickerStart;
       console.log(
-        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) metrics=ok price=${metrics.price ?? 'null'} context=${contextStatus} prices=${priceStatus} ${tickerMs}ms`
+        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) metrics=ok price=${metrics.price ?? 'null'} context=${contextStatus} prices=${priceStatus} ${tickerMs}ms`,
       );
       results.push({ ticker, status: 'ok' });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await markFailure(payload, doc.id as string | number, message, req);
       const tickerMs = Date.now() - tickerStart;
-      console.log(
-        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) ERROR ${tickerMs}ms: ${message}`
-      );
+      console.log(`[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) ERROR ${tickerMs}ms: ${message}`);
       results.push({ ticker, status: 'error', error: message });
     }
 
     await sleep(DELAY_BETWEEN_TICKERS_MS);
   }
 
-  const okCount = results.filter(r => r.status === 'ok').length;
+  const okCount = results.filter((r) => r.status === 'ok').length;
   const durationMs = Date.now() - start;
   console.log(
-    `[refresh-stocks] done in ${durationMs}ms: ${okCount}/${results.length} ok, ${results.length - okCount} failed`
+    `[refresh-stocks] done in ${durationMs}ms: ${okCount}/${results.length} ok, ${results.length - okCount} failed`,
   );
 
   return {
@@ -127,7 +115,7 @@ async function applyMetrics(
   id: string | number,
   metrics: Awaited<ReturnType<typeof fetchStockMetrics>>,
   recentContext: RecentContext | null,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<void> {
   const data: Record<string, unknown> = {
     price: metrics.price,
@@ -167,7 +155,7 @@ async function markFailure(
   payload: Payload,
   id: string | number,
   message: string,
-  req?: PayloadRequest
+  req?: PayloadRequest,
 ): Promise<void> {
   await payload.update({
     collection: 'stocks',

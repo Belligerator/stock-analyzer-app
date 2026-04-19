@@ -74,12 +74,8 @@
           "name": "users_sessions_parent_id_fk",
           "tableFrom": "users_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["_parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -284,12 +280,8 @@
           "name": "stocks_sources_parent_id_fk",
           "tableFrom": "stocks_sources",
           "tableTo": "stocks",
-          "columnsFrom": [
-            "_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["_parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1004,12 +996,8 @@
           "name": "payload_locked_documents_rels_parent_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "payload_locked_documents",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1017,12 +1005,8 @@
           "name": "payload_locked_documents_rels_users_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1030,12 +1014,8 @@
           "name": "payload_locked_documents_rels_stocks_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "stocks",
-          "columnsFrom": [
-            "stocks_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["stocks_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1043,12 +1023,8 @@
           "name": "payload_locked_documents_rels_price_history_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "price_history",
-          "columnsFrom": [
-            "price_history_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["price_history_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1252,12 +1228,8 @@
           "name": "payload_preferences_rels_parent_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "payload_preferences",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1265,12 +1237,8 @@
           "name": "payload_preferences_rels_users_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1362,29 +1330,17 @@
     "public.enum_stocks_currency": {
       "name": "enum_stocks_currency",
       "schema": "public",
-      "values": [
-        "USD",
-        "EUR"
-      ]
+      "values": ["USD", "EUR"]
     },
     "public.enum_stocks_cons": {
       "name": "enum_stocks_cons",
       "schema": "public",
-      "values": [
-        "Strong Buy",
-        "Buy",
-        "Hold",
-        "Sell",
-        "Strong Sell"
-      ]
+      "values": ["Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"]
     },
     "public.enum_price_history_interval": {
       "name": "enum_price_history_interval",
       "schema": "public",
-      "values": [
-        "daily",
-        "weekly"
-      ]
+      "values": ["daily", "weekly"]
     }
   },
   "schemas": {},
