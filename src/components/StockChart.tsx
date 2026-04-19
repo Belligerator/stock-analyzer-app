@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ReferenceArea, Tooltip, XAxis, YAxis } from 'recharts';
 import type { Currency } from '../types/stocks';
 import { formatPrice } from '../utils/format';
 
@@ -147,6 +147,65 @@ export function StockChart({ ticker, currency }: StockChartProps) {
   const showError = !loading && !!error;
   const showEmpty = !loading && !error && !hasData;
 
+  const [selection, setSelection] = useState<{ startIdx: number; endIdx: number } | null>(null);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    setSelection(null);
+  }, [period, ticker]);
+
+  const normalizedSelection = useMemo(() => {
+    if (!selection) return null;
+    const a = Math.min(selection.startIdx, selection.endIdx);
+    const b = Math.max(selection.startIdx, selection.endIdx);
+    if (a === b) return null;
+    if (a < 0 || b < 0 || a >= data.length || b >= data.length) return null;
+    return { startIdx: a, endIdx: b };
+  }, [selection, data.length]);
+
+  const selectionStats = useMemo(() => {
+    if (!normalizedSelection || data.length < 2) return null;
+    const start = data[normalizedSelection.startIdx];
+    const end = data[normalizedSelection.endIdx];
+    if (!start || !end) return null;
+    const diff = end.close - start.close;
+    const pct = start.close !== 0 ? (diff / start.close) * 100 : 0;
+    return {
+      startDate: start.date,
+      endDate: end.date,
+      startPrice: start.close,
+      endPrice: end.close,
+      diff,
+      pct,
+      color: diff >= 0 ? '#22c55e' : '#ef4444',
+    };
+  }, [normalizedSelection, data]);
+
+  type ChartMouseEvent = { activeTooltipIndex?: number | string | null } | null | undefined;
+  const toIdx = (v: unknown): number | null => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') {
+      const n = parseInt(v, 10);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  };
+  const handleChartDown = (state: ChartMouseEvent) => {
+    const idx = toIdx(state?.activeTooltipIndex);
+    if (idx == null) return;
+    isDraggingRef.current = true;
+    setSelection({ startIdx: idx, endIdx: idx });
+  };
+  const handleChartMove = (state: ChartMouseEvent) => {
+    if (!isDraggingRef.current) return;
+    const idx = toIdx(state?.activeTooltipIndex);
+    if (idx == null) return;
+    setSelection(prev => (prev ? { ...prev, endIdx: idx } : { startIdx: idx, endIdx: idx }));
+  };
+  const handleChartUp = () => {
+    isDraggingRef.current = false;
+  };
+
   const { currentPrice, deltaAbs, deltaPct, deltaColor } = useMemo(() => {
     if (data.length < 2) {
       return {
@@ -284,46 +343,121 @@ export function StockChart({ ticker, currency }: StockChartProps) {
           </div>
         )}
         {canRender && (
-          <AreaChart width={width} height={CHART_HEIGHT} data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.45} />
-                <stop offset="100%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#1a2433" strokeDasharray="2 4" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: '#667788', fontSize: 10 }}
-              tickFormatter={(v) => formatAxisDate(v, period)}
-              stroke="#22303d"
-              tickLine={false}
-              minTickGap={24}
-              tickCount={xTickCount}
-            />
-            <YAxis
-              domain={['auto', 'auto']}
-              tick={{ fill: '#667788', fontSize: 10 }}
-              tickFormatter={(v) => formatAxisPrice(v, currency)}
-              stroke="#22303d"
-              tickLine={false}
-              width={46}
-              orientation="left"
-            />
-            <Tooltip
-              content={<ChartTooltip currency={currency} />}
-              cursor={{ stroke: '#334155', strokeDasharray: '3 3' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="close"
-              stroke={color}
-              strokeWidth={1.5}
-              fill={`url(#${gradientId})`}
-              isAnimationActive={false}
-              activeDot={{ r: 3, strokeWidth: 0, fill: color }}
-            />
-          </AreaChart>
+          <div style={{ touchAction: 'none' }}>
+            <AreaChart
+              width={width}
+              height={CHART_HEIGHT}
+              data={data}
+              margin={{ top: 6, right: 8, left: 0, bottom: 0 }}
+              onMouseDown={handleChartDown}
+              onMouseMove={handleChartMove}
+              onMouseUp={handleChartUp}
+              onMouseLeave={handleChartUp}
+              onTouchStart={handleChartDown}
+              onTouchMove={handleChartMove}
+              onTouchEnd={handleChartUp}
+            >
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#1a2433" strokeDasharray="2 4" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: '#667788', fontSize: 10 }}
+                tickFormatter={(v) => formatAxisDate(v, period)}
+                stroke="#22303d"
+                tickLine={false}
+                minTickGap={24}
+                tickCount={xTickCount}
+              />
+              <YAxis
+                domain={['auto', 'auto']}
+                tick={{ fill: '#667788', fontSize: 10 }}
+                tickFormatter={(v) => formatAxisPrice(v, currency)}
+                stroke="#22303d"
+                tickLine={false}
+                width={46}
+                orientation="left"
+              />
+              {!normalizedSelection && (
+                <Tooltip
+                  content={<ChartTooltip currency={currency} />}
+                  cursor={{ stroke: '#334155', strokeDasharray: '3 3' }}
+                />
+              )}
+              <Area
+                type="monotone"
+                dataKey="close"
+                stroke={color}
+                strokeWidth={1.5}
+                fill={`url(#${gradientId})`}
+                isAnimationActive={false}
+                activeDot={normalizedSelection ? false : { r: 3, strokeWidth: 0, fill: color }}
+              />
+              {normalizedSelection && selectionStats && (
+                <ReferenceArea
+                  x1={data[normalizedSelection.startIdx].date}
+                  x2={data[normalizedSelection.endIdx].date}
+                  strokeOpacity={0}
+                  fill={selectionStats.color}
+                  fillOpacity={0.12}
+                />
+              )}
+            </AreaChart>
+          </div>
+        )}
+        {selectionStats && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              background: 'rgba(10, 18, 28, 0.92)',
+              border: `1px solid ${selectionStats.color}`,
+              borderRadius: 4,
+              padding: '6px 10px',
+              fontSize: 11,
+              color: '#cfd8e3',
+              zIndex: 3,
+              maxWidth: 'calc(100% - 8px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+              <span style={{ color: '#778899', fontSize: 10 }}>
+                {formatTooltipDate(selectionStats.startDate)} → {formatTooltipDate(selectionStats.endDate)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelection(null)}
+                aria-label="Zavřít výběr"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#778899',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ color: selectionStats.color, fontWeight: 600 }}>
+              {selectionStats.diff >= 0 ? '+' : '−'}
+              {formatPrice(Math.abs(selectionStats.diff), currency)} ({selectionStats.pct >= 0 ? '+' : ''}
+              {selectionStats.pct.toFixed(2)}%)
+            </div>
+            <div style={{ color: '#667788', fontSize: 10 }}>
+              {formatPrice(selectionStats.startPrice, currency)} → {formatPrice(selectionStats.endPrice, currency)}
+            </div>
+          </div>
         )}
       </div>
     </div>
