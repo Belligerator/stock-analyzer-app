@@ -38,7 +38,14 @@ export function NotePreview() {
   const { value: updatedAt } = useField<string>({ path: 'noteUpdatedAt' });
   const { value: recentContext } = useField<RecentContext>({ path: 'recentContext' });
 
-  const trimmed = typeof note === 'string' ? note.trim() : '';
+  const trimmed =
+    typeof note === 'string'
+      ? note
+          .replace(/<\/?cite\b[^>]*>/gi, '')
+          .replace(/[ \t]+/g, ' ')
+          .replace(/ *\n */g, '\n')
+          .trim()
+      : '';
   const news: RecentContextNews[] = (recentContext?.news ?? []).filter(isValidNews);
 
   return (

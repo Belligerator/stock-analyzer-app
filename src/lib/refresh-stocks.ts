@@ -1,4 +1,4 @@
-import { getPayload, type Payload, type Where } from 'payload';
+import { getPayload, type Payload, type PayloadRequest, type Where } from 'payload';
 import config from '@payload-config';
 import {
   fetchFxRates,
@@ -27,8 +27,11 @@ export type RefreshSummary = {
   durationMs: number;
 };
 
-export async function refreshStocks(options: { tickers?: string[] } = {}): Promise<RefreshSummary> {
-  const payload = await getPayload({ config });
+export async function refreshStocks(
+  options: { tickers?: string[]; req?: PayloadRequest } = {}
+): Promise<RefreshSummary> {
+  const payload = options.req?.payload ?? (await getPayload({ config }));
+  const req = options.req;
   const start = Date.now();
 
   const where: Where = options.tickers
@@ -40,6 +43,7 @@ export async function refreshStocks(options: { tickers?: string[] } = {}): Promi
     where,
     limit: 500,
     depth: 0,
+    req,
   });
 
   const currencies = Array.from(
@@ -74,11 +78,11 @@ export async function refreshStocks(options: { tickers?: string[] } = {}): Promi
       } catch (ctxErr) {
         contextStatus = `err: ${ctxErr instanceof Error ? ctxErr.message : 'unknown'}`;
       }
-      await applyMetrics(payload, doc.id as string | number, metrics, recentContext);
+      await applyMetrics(payload, doc.id as string | number, metrics, recentContext, req);
 
       let priceStatus = 'skipped';
       try {
-        const priceSummary = await updatePriceHistory(ticker, yahooSymbol, payload);
+        const priceSummary = await updatePriceHistory(ticker, yahooSymbol, payload, req);
         priceStatus = `d+${priceSummary.daily.added}/-${priceSummary.daily.trimmed} w+${priceSummary.weekly.added}/-${priceSummary.weekly.trimmed}`;
       } catch (priceErr) {
         priceStatus = `err: ${priceErr instanceof Error ? priceErr.message : 'unknown'}`;
@@ -91,7 +95,7 @@ export async function refreshStocks(options: { tickers?: string[] } = {}): Promi
       results.push({ ticker, status: 'ok' });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await markFailure(payload, doc.id as string | number, message);
+      await markFailure(payload, doc.id as string | number, message, req);
       const tickerMs = Date.now() - tickerStart;
       console.log(
         `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) ERROR ${tickerMs}ms: ${message}`
@@ -122,7 +126,8 @@ async function applyMetrics(
   payload: Payload,
   id: string | number,
   metrics: Awaited<ReturnType<typeof fetchStockMetrics>>,
-  recentContext: RecentContext | null
+  recentContext: RecentContext | null,
+  req?: PayloadRequest
 ): Promise<void> {
   const data: Record<string, unknown> = {
     price: metrics.price,
@@ -154,17 +159,20 @@ async function applyMetrics(
     collection: 'stocks',
     id,
     data,
+    req,
   });
 }
 
 async function markFailure(
   payload: Payload,
   id: string | number,
-  message: string
+  message: string,
+  req?: PayloadRequest
 ): Promise<void> {
   await payload.update({
     collection: 'stocks',
     id,
     data: { lastFetchError: message.slice(0, 500) },
+    req,
   });
 }

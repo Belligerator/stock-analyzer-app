@@ -1,4 +1,4 @@
-import type { Payload } from 'payload';
+import type { Payload, PayloadRequest } from 'payload';
 import { fetchHistoricalPrices } from './yahoo-finance';
 
 type PriceInterval = 'daily' | 'weekly';
@@ -44,7 +44,8 @@ export interface PriceUpdateSummary {
 async function latestDateFor(
   payload: Payload,
   ticker: string,
-  interval: PriceInterval
+  interval: PriceInterval,
+  req?: PayloadRequest
 ): Promise<string | null> {
   const { docs } = await payload.find({
     collection: 'price-history',
@@ -53,6 +54,7 @@ async function latestDateFor(
     limit: 1,
     depth: 0,
     pagination: false,
+    req,
   });
   const top = docs[0] as { date?: string } | undefined;
   return top?.date ?? null;
@@ -62,7 +64,8 @@ async function trimOlderThan(
   payload: Payload,
   ticker: string,
   interval: PriceInterval,
-  cutoffYmd: string
+  cutoffYmd: string,
+  req?: PayloadRequest
 ): Promise<number> {
   const res = await payload.delete({
     collection: 'price-history',
@@ -73,6 +76,7 @@ async function trimOlderThan(
         { date: { less_than: cutoffYmd } },
       ],
     },
+    req,
   });
   return (res.docs?.length ?? 0) as number;
 }
@@ -81,20 +85,21 @@ async function upsertInterval(
   payload: Payload,
   ticker: string,
   yahooSymbol: string,
-  interval: PriceInterval
+  interval: PriceInterval,
+  req?: PayloadRequest
 ): Promise<PriceUpdateCounts> {
   const windowYears = interval === 'daily' ? DAILY_WINDOW_YEARS : WEEKLY_WINDOW_YEARS;
   const yahooInterval = interval === 'daily' ? '1d' : '1wk';
   const now = new Date();
   const today = todayYmd();
 
-  const last = await latestDateFor(payload, ticker, interval);
+  const last = await latestDateFor(payload, ticker, interval, req);
 
   let period1: Date;
   if (last) {
     const next = addDays(ymdToDate(last), 1);
     if (next >= now) {
-      const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears));
+      const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears), req);
       return { added: 0, trimmed, skipped: true };
     }
     period1 = next;
@@ -110,6 +115,7 @@ async function upsertInterval(
       await payload.create({
         collection: 'price-history',
         data: { ticker, interval, date: row.date, close: row.close },
+        req,
       });
       added += 1;
     } catch (err) {
@@ -120,7 +126,7 @@ async function upsertInterval(
     }
   }
 
-  const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears));
+  const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears), req);
 
   return { added, trimmed, skipped: false };
 }
@@ -136,9 +142,10 @@ function toYmdCutoff(windowYears: number): string {
 export async function updatePriceHistory(
   ticker: string,
   yahooSymbol: string,
-  payload: Payload
+  payload: Payload,
+  req?: PayloadRequest
 ): Promise<PriceUpdateSummary> {
-  const daily = await upsertInterval(payload, ticker, yahooSymbol, 'daily');
-  const weekly = await upsertInterval(payload, ticker, yahooSymbol, 'weekly');
+  const daily = await upsertInterval(payload, ticker, yahooSymbol, 'daily', req);
+  const weekly = await upsertInterval(payload, ticker, yahooSymbol, 'weekly', req);
   return { daily, weekly };
 }

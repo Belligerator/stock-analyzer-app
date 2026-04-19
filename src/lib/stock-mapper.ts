@@ -35,6 +35,16 @@ type PayloadStockDoc = {
 
 const toInt = (v: number | null | undefined): number => (typeof v === 'number' ? v : 0);
 
+function stripCiteTags(text: string | null | undefined): string | undefined {
+  if (!text) return undefined;
+  const cleaned = text
+    .replace(/<\/?cite\b[^>]*>/gi, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .trim();
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
 export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
   const bd = doc.analystBreakdown;
   const breakdown =
@@ -70,7 +80,7 @@ export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
     targetLow: doc.targetLow ?? null,
     numAnalysts: doc.numAnalysts ?? null,
     analystBreakdown: breakdown,
-    note: doc.note ?? undefined,
+    note: stripCiteTags(doc.note),
     sources: (doc.sources ?? [])
       .map(s => s.url)
       .filter((u): u is string => typeof u === 'string' && u.length > 0),

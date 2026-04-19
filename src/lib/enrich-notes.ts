@@ -190,6 +190,8 @@ function cleanNoteOutput(raw: string): string {
   if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith('„') && text.endsWith('"'))) {
     text = text.slice(1, -1).trim();
   }
+  text = text.replace(/<\/?cite\b[^>]*>/gi, '');
+  text = text.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
   return text;
 }
 

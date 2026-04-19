@@ -1,3 +1,4 @@
+import { refreshStocks } from '@/lib/refresh-stocks';
 import type { CollectionConfig } from 'payload';
 
 const authedOnly = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
@@ -26,6 +27,25 @@ export const Stocks: CollectionConfig = {
     update: authedOnly,
     delete: authedOnly,
   },
+  hooks: {
+    afterChange: [
+      async ({ operation, doc, req }) => {
+        if (operation !== 'create') return doc;
+        const ticker = typeof doc?.ticker === 'string' ? doc.ticker : null;
+        if (!ticker) return doc;
+
+        try {
+          req.payload.logger.info(`[stocks:afterChange] auto-refresh triggered for ${ticker}`);
+          await refreshStocks({ tickers: [ticker], req });
+          req.payload.logger.info(`[stocks:afterChange] auto-refresh done for ${ticker}`);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          req.payload.logger.error(`[stocks:afterChange] auto-refresh failed for ${ticker}: ${msg}`);
+        }
+        return doc;
+      },
+    ],
+  },
   fields: [
     {
       type: 'tabs',
@@ -42,6 +62,12 @@ export const Stocks: CollectionConfig = {
                   required: true,
                   unique: true,
                   index: true,
+                  hooks: {
+                    beforeValidate: [
+                      ({ value }) =>
+                        typeof value === 'string' ? value.trim().toUpperCase() : value,
+                    ],
+                  },
                   admin: { width: '25%', description: 'App-level ticker (e.g. DSY, NVDA).' },
                 },
                 {
@@ -80,14 +106,18 @@ export const Stocks: CollectionConfig = {
                 {
                   name: 'name',
                   type: 'text',
-                  required: true,
-                  admin: { width: '60%' },
+                  admin: {
+                    width: '60%',
+                    description: 'Automaticky doplněno z Yahoo. Lze přepsat.',
+                  },
                 },
                 {
                   name: 'sector',
                   type: 'text',
-                  required: true,
-                  admin: { width: '40%' },
+                  admin: {
+                    width: '40%',
+                    description: 'Automaticky doplněno z Yahoo.',
+                  },
                 },
               ],
             },
