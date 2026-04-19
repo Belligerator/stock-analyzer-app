@@ -28,6 +28,15 @@ export const Stocks: CollectionConfig = {
     delete: authedOnly,
   },
   hooks: {
+    beforeChange: [
+      ({ data, operation }) => {
+        if (operation !== 'create' && operation !== 'update') return data;
+        if (data && typeof data.ticker === 'string') {
+          data.ticker = data.ticker.trim().toUpperCase();
+        }
+        return data;
+      },
+    ],
     afterChange: [
       async ({ operation, doc, req }) => {
         if (operation !== 'create') return doc;
@@ -62,9 +71,6 @@ export const Stocks: CollectionConfig = {
                   required: true,
                   unique: true,
                   index: true,
-                  hooks: {
-                    beforeValidate: [({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value)],
-                  },
                   admin: { width: '25%', description: 'App-level ticker (e.g. DSY, NVDA).' },
                 },
                 {
