@@ -251,6 +251,39 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function toYmd(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export interface HistoricalPricePoint {
+  date: string;
+  close: number;
+}
+
+export async function fetchHistoricalPrices(
+  yahooSymbol: string,
+  period1: Date,
+  period2: Date,
+  interval: '1d' | '1wk'
+): Promise<HistoricalPricePoint[]> {
+  const rows = await yf.historical(yahooSymbol, { period1, period2, interval });
+  const out: HistoricalPricePoint[] = [];
+  for (const row of rows) {
+    const close = (row as { close?: number; adjClose?: number }).close ??
+      (row as { adjClose?: number }).adjClose;
+    const date = (row as { date?: Date | string }).date;
+    if (typeof close !== 'number' || !Number.isFinite(close)) continue;
+    if (!date) continue;
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) continue;
+    out.push({ date: toYmd(d), close: Math.round(close * 100) / 100 });
+  }
+  return out;
+}
+
 function stripHtml(html: string | undefined | null): string {
   if (!html) return '';
   return html

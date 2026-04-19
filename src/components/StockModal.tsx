@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Stock } from "../types/stocks";
 import { formatDateTime, formatPe, formatPct, formatPrice, upside } from "../utils/format";
+import { StockChart } from "./StockChart";
 
 interface StockModalProps {
   stock: Stock | null;
@@ -563,6 +564,11 @@ export function StockModal({ stock, onClose }: StockModalProps) {
           >
             ×
           </button>
+        </div>
+
+        {/* Vývoj ceny */}
+        <div style={{ marginTop: 14, marginBottom: 6 }}>
+          <StockChart ticker={stock.ticker} currency={stock.currency} />
         </div>
 
         {/* Cena & valuace */}

@@ -76,7 +76,7 @@ Dva workflow soubory v [.github/workflows/](.github/workflows/):
 | Workflow | Schedule (UTC) | Endpoint | Co dělá |
 |---|---|---|---|
 | `refresh-stocks.yml` | denně 03:00 | `/api/cron/refresh-stocks` | yahoo-finance2 metriky pro všechny active tickery |
-| `refresh-notes.yml` | sobota 06:00 | `/api/cron/refresh-notes` | Claude + web search regeneruje AI poznámky |
+| `refresh-notes.yml` | manual only (`workflow_dispatch`) | `/api/cron/refresh-notes` | Claude + web search regeneruje AI poznámky |
 
 Oba mají `workflow_dispatch` — v **GitHub Actions → workflow → Run workflow** je spustíš ručně kdykoli.
 
@@ -134,7 +134,7 @@ V adminu `/admin/collections/stocks/create` → vyplň `ticker`, `name`, `sector
 
 ## AI pipeline — cost a konfigurace
 
-Týdenní cron `refresh-notes` spouští **3-stage pipeline**:
+Workflow `refresh-notes` (aktuálně manual-only) spouští **3-stage pipeline**:
 
 1. **Stage 1 — Triage (Haiku 4.5, batch, no web search)**. Dostane metriky + `recentContext` (news, sigDevs, researchReports, upgrades) všech aktivních tickerů. Vrátí JSON s priority `skip` / `normal` / `high` per ticker.
 2. **Stage 2 — Per-ticker analysis**. Pro non-skip tickery volá Sonnet 4.6 (`normal`) nebo Opus 4.7 (`high`) s `web_search` + `web_fetch` (volitelné). Vrací 3–5 větnou poznámku s citacemi.
@@ -178,7 +178,7 @@ Změna = restart Vercel deploymentu (env var propagation) nebo re-run GH workflo
 ```
 .github/workflows/
 ├── refresh-stocks.yml        # schedule + workflow_dispatch → curl Vercel endpoint
-└── refresh-notes.yml         # schedule + workflow_dispatch → curl Vercel endpoint
+└── refresh-notes.yml         # workflow_dispatch only → curl Vercel endpoint
 
 src/
 ├── app/

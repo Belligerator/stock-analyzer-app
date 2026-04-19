@@ -1,10 +1,8 @@
 name: Refresh AI notes
 
 on:
-  schedule:
-    # Weekly on Saturday at 06:00 UTC (= 07:00 SEČ / 08:00 SELČ)
-    # Běží 3 hodiny po denním refresh-stocks, takže recentContext je čerstvý z dnešního rána.
-    - cron: '0 6 * * 6'
+  # Scheduled cron is intentionally disabled for now.
+  # Run manually from GitHub Actions -> Refresh AI notes -> Run workflow.
   workflow_dispatch: # manual trigger from GitHub UI
 
 concurrency:

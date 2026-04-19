@@ -7,6 +7,7 @@ import {
   sleep,
   type FxRates,
 } from './yahoo-finance';
+import { updatePriceHistory } from './refresh-prices';
 import type { RecentContext } from '@/types/stocks';
 
 const DELAY_BETWEEN_TICKERS_MS = 500;
@@ -74,9 +75,18 @@ export async function refreshStocks(options: { tickers?: string[] } = {}): Promi
         contextStatus = `err: ${ctxErr instanceof Error ? ctxErr.message : 'unknown'}`;
       }
       await applyMetrics(payload, doc.id as string | number, metrics, recentContext);
+
+      let priceStatus = 'skipped';
+      try {
+        const priceSummary = await updatePriceHistory(ticker, yahooSymbol, payload);
+        priceStatus = `d+${priceSummary.daily.added}/-${priceSummary.daily.trimmed} w+${priceSummary.weekly.added}/-${priceSummary.weekly.trimmed}`;
+      } catch (priceErr) {
+        priceStatus = `err: ${priceErr instanceof Error ? priceErr.message : 'unknown'}`;
+      }
+
       const tickerMs = Date.now() - tickerStart;
       console.log(
-        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) metrics=ok price=${metrics.price ?? 'null'} context=${contextStatus} ${tickerMs}ms`
+        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) metrics=ok price=${metrics.price ?? 'null'} context=${contextStatus} prices=${priceStatus} ${tickerMs}ms`
       );
       results.push({ ticker, status: 'ok' });
     } catch (err) {

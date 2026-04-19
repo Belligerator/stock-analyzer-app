@@ -8,6 +8,7 @@ export const Stocks: CollectionConfig = {
     singular: 'Stock',
     plural: 'Stocks',
   },
+  defaultSort: 'ticker',
   admin: {
     useAsTitle: 'ticker',
     defaultColumns: ['ticker', 'name', 'sector', 'price', 'cons', 'metricsUpdatedAt'],

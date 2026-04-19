@@ -10,3 +10,13 @@ body {
   color: #b8c5d6;
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
+
+.stock-chart,
+.stock-chart *,
+.stock-chart *:focus,
+.stock-chart *:focus-visible,
+.stock-chart *:active {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
