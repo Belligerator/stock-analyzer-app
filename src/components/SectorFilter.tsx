@@ -1,5 +1,7 @@
 'use client';
 
+import s from './SectorFilter.module.css';
+
 interface SectorFilterProps {
   sectors: string[];
   value: string;
@@ -8,26 +10,16 @@ interface SectorFilterProps {
 
 export function SectorFilter({ sectors, value, onChange }: SectorFilterProps) {
   return (
-    <div style={{ display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap' }}>
-      {sectors.map((s) => {
-        const active = value === s;
+    <div className={s.filter}>
+      {sectors.map((sector) => {
+        const active = value === sector;
         return (
           <button
-            key={s}
-            onClick={() => onChange(s)}
-            style={{
-              padding: '4px 10px',
-              fontSize: 10,
-              borderRadius: 3,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'all .15s',
-              border: active ? '1px solid #3b82f6' : '1px solid #1c2533',
-              background: active ? 'rgba(59,130,246,.12)' : 'rgba(12,16,23,.6)',
-              color: active ? '#60a5fa' : '#778899',
-            }}
+            key={sector}
+            onClick={() => onChange(sector)}
+            className={`${s.btn} ${active ? s.active : s.inactive}`}
           >
-            {s}
+            {sector}
           </button>
         );
       })}

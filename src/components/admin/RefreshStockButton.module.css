@@ -1,0 +1,25 @@
+.wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-100);
+  color: var(--theme-text);
+}
+
+.statusOk {
+  color: #22c55e;
+  font-size: 12px;
+}
+
+.statusError {
+  color: #ef4444;
+  font-size: 12px;
+}

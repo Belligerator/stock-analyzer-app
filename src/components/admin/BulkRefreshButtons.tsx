@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import s from './BulkRefreshButtons.module.css';
 
 type Kind = 'refresh-stocks' | 'refresh-notes';
 
@@ -108,25 +109,14 @@ export function BulkRefreshButtons() {
   const runningNotes = running && state.kind === 'refresh-notes';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 8,
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        marginBottom: 16,
-        padding: '12px 14px',
-        border: '1px solid var(--theme-elevation-150)',
-        borderRadius: 4,
-        background: 'var(--theme-elevation-50)',
-      }}
-    >
-      <strong style={{ fontSize: 12, color: 'var(--theme-text)', marginRight: 4 }}>Bulk actions:</strong>
+    <div className={s.wrap}>
+      <strong className={s.label}>Bulk actions:</strong>
       <button
         type="button"
         onClick={() => run('refresh-stocks')}
         disabled={running}
-        style={buttonStyle(running)}
+        className={s.btn}
+        style={{ cursor: running ? 'wait' : 'pointer', opacity: running ? 0.6 : 1 }}
         title="Spustí yahoo-finance fetch pro všechny aktivní tickery (trvá ~15–30 s)."
       >
         {runningStocks ? 'Refreshing metrics…' : 'Refresh all metrics'}
@@ -135,35 +125,19 @@ export function BulkRefreshButtons() {
         type="button"
         onClick={() => run('refresh-notes')}
         disabled={running}
-        style={buttonStyle(running)}
+        className={s.btn}
+        style={{ cursor: running ? 'wait' : 'pointer', opacity: running ? 0.6 : 1 }}
         title="Spustí AI pipeline (Haiku triage → Sonnet/Opus per ticker). Může trvat minuty + stojí $0.10–$2 dle triggerů."
       >
         {runningNotes ? 'Generating AI notes…' : 'Regenerate all AI notes'}
       </button>
-      {state.status === 'ok' && (
-        <span style={{ color: '#22c55e', fontSize: 11, marginLeft: 4 }}>✓ {state.message}</span>
-      )}
-      {state.status === 'error' && (
-        <span style={{ color: '#ef4444', fontSize: 11, marginLeft: 4 }}>✗ {state.message}</span>
-      )}
+      {state.status === 'ok' && <span className={s.statusOk}>✓ {state.message}</span>}
+      {state.status === 'error' && <span className={s.statusError}>✗ {state.message}</span>}
       {running && (
-        <span style={{ color: 'var(--theme-text-dim)', fontSize: 11, marginLeft: 4 }}>
+        <span className={s.statusRunning}>
           Running… ({((Date.now() - state.startedAt) / 1000).toFixed(0)}s elapsed)
         </span>
       )}
     </div>
   );
-}
-
-function buttonStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: '6px 12px',
-    fontSize: 12,
-    borderRadius: 4,
-    border: '1px solid var(--theme-elevation-150)',
-    background: 'var(--theme-elevation-100)',
-    color: 'var(--theme-text)',
-    cursor: disabled ? 'wait' : 'pointer',
-    opacity: disabled ? 0.6 : 1,
-  };
 }

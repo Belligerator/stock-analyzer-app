@@ -2,6 +2,7 @@
 
 import { useField } from '@payloadcms/ui';
 import type { RecentContext, RecentContextNews } from '@/types/stocks';
+import s from './NotePreview.module.css';
 
 function formatDate(iso: string | undefined | null): string {
   if (!iso) return '';
@@ -49,109 +50,38 @@ export function NotePreview() {
   const news: RecentContextNews[] = (recentContext?.news ?? []).filter(isValidNews);
 
   return (
-    <div
-      style={{
-        marginBottom: 20,
-        padding: 16,
-        border: '1px solid var(--theme-elevation-150)',
-        borderRadius: 6,
-        background: 'var(--theme-elevation-50)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          marginBottom: 10,
-          paddingBottom: 8,
-          borderBottom: '1px solid var(--theme-elevation-100)',
-        }}
-      >
-        <strong style={{ fontSize: 12, color: 'var(--theme-text)' }}>AI Note preview</strong>
+    <div className={s.wrap}>
+      <div className={s.header}>
+        <strong className={s.headerTitle}>AI Note preview</strong>
         {updatedAt && (
-          <span style={{ fontSize: 10, color: 'var(--theme-text-dim)' }}>Last generated: {formatDate(updatedAt)}</span>
+          <span className={s.headerDate}>Last generated: {formatDate(updatedAt)}</span>
         )}
       </div>
       {trimmed ? (
         <>
-          <div
-            style={{
-              fontSize: 13,
-              lineHeight: 1.7,
-              color: 'var(--theme-text)',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            {trimmed}
-          </div>
-          <div
-            style={{
-              marginTop: 10,
-              fontSize: 10,
-              lineHeight: 1.5,
-              color: 'var(--theme-text-dim)',
-              fontStyle: 'italic',
-            }}
-          >
+          <div className={s.noteContent}>{trimmed}</div>
+          <div className={s.disclaimer}>
             Generováno AI. Nejedná se o investiční doporučení ani nabídku ke koupi či prodeji cenných papírů. Pouze
             informativní účel.
           </div>
         </>
       ) : (
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--theme-text-dim)',
-            fontStyle: 'italic',
-          }}
-        >
-          Poznámka nebyla vygenerována. Klikni "Regenerate AI note" výše.
+        <div className={s.empty}>
+          Poznámka nebyla vygenerována. Klikni &quot;Regenerate AI note&quot; výše.
         </div>
       )}
       {news.length > 0 && (
-        <div
-          style={{
-            marginTop: 14,
-            paddingTop: 10,
-            borderTop: '1px solid var(--theme-elevation-100)',
-          }}
-        >
-          <div
-            style={{
-              fontSize: 10,
-              color: 'var(--theme-text-dim)',
-              marginBottom: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '.06em',
-            }}
-          >
-            Zdroje z Yahoo (recent news)
-          </div>
-          <ol
-            style={{
-              margin: 0,
-              paddingLeft: 18,
-              fontSize: 11,
-              lineHeight: 1.7,
-              color: 'var(--theme-text)',
-            }}
-          >
+        <div className={s.newsSection}>
+          <div className={s.newsLabel}>Zdroje z Yahoo (recent news)</div>
+          <ol className={s.newsList}>
             {news.map((n, i) => (
               <li key={`${i}-${n.link}`}>
-                <a
-                  href={n.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={n.title}
-                  style={{ color: 'var(--theme-text)', textDecoration: 'underline' }}
-                >
+                <a href={n.link} target="_blank" rel="noreferrer" title={n.title} className={s.newsLink}>
                   {n.publisher || 'Zdroj'}
                   {n.publishedAt ? ` (${formatShortDate(n.publishedAt)})` : ''}
                 </a>
                 {n.title && (
-                  <span style={{ color: 'var(--theme-text-dim)', marginLeft: 6 }}>
+                  <span className={s.newsSnippet}>
                     — {n.title.length > 80 ? n.title.slice(0, 80) + '…' : n.title}
                   </span>
                 )}

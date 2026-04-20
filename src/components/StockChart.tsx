@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ReferenceArea, Tooltip, XAxis, YAxis } from 'recharts';
 import type { Currency } from '../types/stocks';
 import { formatPrice } from '../utils/format';
+import s from './StockChart.module.css';
 
 type Period = '1m' | 'ytd' | '1y' | '3y' | '5y' | 'max';
 
@@ -46,10 +47,10 @@ function formatAxisDate(ymd: string, period: Period): string {
 }
 
 function formatAxisPrice(v: number, currency: Currency): string {
-  const s = CURRENCY_SYMBOL[currency];
-  if (v >= 1000) return `${s}${Math.round(v / 100) / 10}k`;
-  if (v >= 100) return `${s}${Math.round(v)}`;
-  return `${s}${v.toFixed(0)}`;
+  const sym = CURRENCY_SYMBOL[currency];
+  if (v >= 1000) return `${sym}${Math.round(v / 100) / 10}k`;
+  if (v >= 100) return `${sym}${Math.round(v)}`;
+  return `${sym}${v.toFixed(0)}`;
 }
 
 interface ChartTooltipProps {
@@ -62,18 +63,86 @@ function ChartTooltip({ active, payload, currency }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const p = payload[0].payload;
   return (
-    <div
-      style={{
-        background: 'rgba(10, 18, 28, 0.95)',
-        border: '1px solid #223344',
-        borderRadius: 4,
-        padding: '6px 10px',
-        fontSize: 11,
-        color: '#cfd8e3',
-      }}
-    >
-      <div style={{ color: '#778899', fontSize: 10 }}>{formatTooltipDate(p.date)}</div>
-      <div style={{ color: '#e5ecf5', fontWeight: 500 }}>{formatPrice(p.close, currency)}</div>
+    <div className={s.tooltipBox}>
+      <div className={s.tooltipDate}>{formatTooltipDate(p.date)}</div>
+      <div className={s.tooltipPrice}>{formatPrice(p.close, currency)}</div>
+    </div>
+  );
+}
+
+function RangeSlider({
+  max,
+  defaultStart,
+  defaultEnd,
+  onChange,
+}: {
+  max: number;
+  defaultStart: number;
+  defaultEnd: number;
+  onChange: (start: number, end: number) => void;
+}) {
+  const startRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLInputElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  // always call the latest onChange without RAF capturing a stale closure
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const readValues = () => {
+    const a = Number(startRef.current?.value ?? defaultStart);
+    const b = Number(endRef.current?.value ?? defaultEnd);
+    return { start: Math.min(a, b), end: Math.max(a, b) };
+  };
+
+  const handleInput = () => {
+    // 1. Update fill synchronously via DOM — zero re-renders
+    if (fillRef.current && max > 0) {
+      const { start, end } = readValues();
+      fillRef.current.style.left = `${(start / max) * 100}%`;
+      fillRef.current.style.right = `${100 - (end / max) * 100}%`;
+    }
+    // 2. Throttle React state update to one per animation frame (~60fps)
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const { start, end } = readValues();
+      onChangeRef.current(start, end);
+    });
+  };
+
+  useEffect(() => () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); }, []);
+
+  const startPct = max > 0 ? (defaultStart / max) * 100 : 0;
+  const endPct = max > 0 ? (defaultEnd / max) * 100 : 100;
+
+  return (
+    <div className={s.sliderTrack}>
+      <div
+        ref={fillRef}
+        className={s.sliderFill}
+        style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
+      />
+      <input
+        ref={startRef}
+        type="range"
+        className={s.sliderInput}
+        min={0}
+        max={max}
+        defaultValue={defaultStart}
+        style={{ zIndex: defaultStart > max / 2 ? 4 : 3 }}
+        onInput={handleInput}
+      />
+      <input
+        ref={endRef}
+        type="range"
+        className={s.sliderInput}
+        min={0}
+        max={max}
+        defaultValue={defaultEnd}
+        style={{ zIndex: defaultEnd < max / 2 ? 4 : 3 }}
+        onInput={handleInput}
+      />
     </div>
   );
 }
@@ -128,16 +197,11 @@ export function StockChart({ ticker, currency }: StockChartProps) {
   }, [ticker, period]);
 
   const { color, gradientId } = useMemo(() => {
-    if (data.length < 2) {
-      return { color: '#60a5fa', gradientId: `grad-${ticker}-neutral` };
-    }
+    if (data.length < 2) return { color: '#60a5fa', gradientId: `grad-${ticker}-neutral` };
     const first = data[0].close;
     const last = data[data.length - 1].close;
     const up = last >= first;
-    return {
-      color: up ? '#22c55e' : '#ef4444',
-      gradientId: `grad-${ticker}-${up ? 'up' : 'down'}`,
-    };
+    return { color: up ? '#22c55e' : '#ef4444', gradientId: `grad-${ticker}-${up ? 'up' : 'down'}` };
   }, [data, ticker]);
 
   const xTickCount = period === 'max' ? 6 : period === '5y' || period === '3y' ? 5 : 4;
@@ -148,11 +212,35 @@ export function StockChart({ ticker, currency }: StockChartProps) {
   const showEmpty = !loading && !error && !hasData;
 
   const [selection, setSelection] = useState<{ startIdx: number; endIdx: number } | null>(null);
+  const [sliderOpen, setSliderOpen] = useState(false);
+  const [sliderKey, setSliderKey] = useState(0);
+  const [sliderDefaults, setSliderDefaults] = useState({ start: 0, end: 0 });
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
     setSelection(null);
+    setSliderOpen(false);
   }, [period, ticker]);
+
+  const openSlider = () => {
+    if (data.length < 2) return;
+    const n = data.length;
+    const start = Math.floor(n * 0.25);
+    const end = Math.floor(n * 0.75);
+    setSliderDefaults({ start, end });
+    setSliderKey((k) => k + 1);
+    setSelection({ startIdx: start, endIdx: end });
+    setSliderOpen(true);
+  };
+
+  const closeSlider = () => {
+    setSliderOpen(false);
+    setSelection(null);
+  };
+
+  const handleSliderChange = (start: number, end: number) => {
+    if (start !== end) setSelection({ startIdx: start, endIdx: end });
+  };
 
   const normalizedSelection = useMemo(() => {
     if (!selection) return null;
@@ -200,7 +288,7 @@ export function StockChart({ ticker, currency }: StockChartProps) {
     if (!isDraggingRef.current) return;
     const idx = toIdx(state?.activeTooltipIndex);
     if (idx == null) return;
-    setSelection(prev => (prev ? { ...prev, endIdx: idx } : { startIdx: idx, endIdx: idx }));
+    setSelection((prev) => (prev ? { ...prev, endIdx: idx } : { startIdx: idx, endIdx: idx }));
   };
   const handleChartUp = () => {
     isDraggingRef.current = false;
@@ -208,43 +296,22 @@ export function StockChart({ ticker, currency }: StockChartProps) {
 
   const { currentPrice, deltaAbs, deltaPct, deltaColor } = useMemo(() => {
     if (data.length < 2) {
-      return {
-        currentPrice: null as number | null,
-        deltaAbs: null as number | null,
-        deltaPct: null as number | null,
-        deltaColor: '#94a3b8',
-      };
+      return { currentPrice: null as number | null, deltaAbs: null as number | null, deltaPct: null as number | null, deltaColor: '#94a3b8' };
     }
     const first = data[0].close;
     const last = data[data.length - 1].close;
     const diff = last - first;
     const pct = first !== 0 ? (diff / first) * 100 : 0;
-    return {
-      currentPrice: last,
-      deltaAbs: diff,
-      deltaPct: pct,
-      deltaColor: diff >= 0 ? '#22c55e' : '#ef4444',
-    };
+    return { currentPrice: last, deltaAbs: diff, deltaPct: pct, deltaColor: diff >= 0 ? '#22c55e' : '#ef4444' };
   }, [data]);
 
-  const formatSignedPrice = (v: number) => {
-    const sign = v >= 0 ? '+' : '-';
-    return `${sign}${formatPrice(Math.abs(v), currency)}`;
-  };
+  const formatSignedPrice = (v: number) => `${v >= 0 ? '+' : '-'}${formatPrice(Math.abs(v), currency)}`;
   const formatSignedPct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
 
   return (
-    <div className="stock-chart" style={{ outline: 'none' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 10,
-          marginBottom: 10,
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ fontSize: 20, fontWeight: 600, color: '#e5ecf5', letterSpacing: '.02em' }}>
+    <div className={s.chart}>
+      <div className={s.priceHeader}>
+        <div className={s.currentPrice}>
           {currentPrice != null ? formatPrice(currentPrice, currency) : '—'}
         </div>
         {deltaAbs != null && deltaPct != null && (
@@ -254,7 +321,7 @@ export function StockChart({ ticker, currency }: StockChartProps) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+      <div className={s.periodButtons}>
         {PERIOD_OPTIONS.map((opt) => {
           const active = opt.key === period;
           return (
@@ -262,17 +329,11 @@ export function StockChart({ ticker, currency }: StockChartProps) {
               key={opt.key}
               type="button"
               onClick={() => setPeriod(opt.key)}
+              className={s.periodBtn}
               style={{
-                fontSize: 10,
-                padding: '4px 10px',
-                borderRadius: 4,
                 border: `1px solid ${active ? '#3b82f6' : '#22303d'}`,
                 background: active ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                 color: active ? '#93c5fd' : '#94a3b8',
-                cursor: 'pointer',
-                letterSpacing: '.04em',
-                outline: 'none',
-                WebkitTapHighlightColor: 'transparent',
               }}
               onMouseDown={(e) => e.preventDefault()}
             >
@@ -282,68 +343,38 @@ export function StockChart({ ticker, currency }: StockChartProps) {
         })}
       </div>
 
-      <div
-        ref={containerRef}
-        style={{
-          width: '100%',
-          minWidth: 0,
-          height: CHART_HEIGHT,
-          position: 'relative',
-          outline: 'none',
-        }}
-        tabIndex={-1}
-      >
-        {showLoading && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              color: '#556677',
-              zIndex: 2,
-              pointerEvents: 'none',
-            }}
-          >
-            Načítám…
+      {selectionStats && (
+        <div className={s.selectionBox} style={{ border: `1px solid ${selectionStats.color}` }}>
+          <div className={s.selectionHeader}>
+            <span className={s.selectionDate}>
+              {formatTooltipDate(selectionStats.startDate)} → {formatTooltipDate(selectionStats.endDate)}
+            </span>
+            <button
+              type="button"
+              onClick={closeSlider}
+              aria-label="Zavřít výběr"
+              className={s.selectionCloseBtn}
+            >
+              ×
+            </button>
           </div>
-        )}
-        {showError && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              color: '#ef4444',
-              zIndex: 2,
-            }}
-          >
-            Chyba: {error}
+          <div style={{ color: selectionStats.color, fontWeight: 600 }}>
+            {selectionStats.diff >= 0 ? '+' : '−'}
+            {formatPrice(Math.abs(selectionStats.diff), currency)} ({selectionStats.pct >= 0 ? '+' : ''}
+            {selectionStats.pct.toFixed(2)}%)
           </div>
-        )}
-        {showEmpty && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              color: '#556677',
-              zIndex: 2,
-            }}
-          >
-            Žádná data pro tento rozsah.
+          <div className={s.selectionRange}>
+            {formatPrice(selectionStats.startPrice, currency)} → {formatPrice(selectionStats.endPrice, currency)}
           </div>
-        )}
+        </div>
+      )}
+
+      <div ref={containerRef} className={s.chartContainer} tabIndex={-1} onMouseDown={(e) => e.preventDefault()}>
+        {showLoading && <div className={`${s.stateOverlay} ${s.stateOverlayLoading}`}>Načítám…</div>}
+        {showError && <div className={`${s.stateOverlay} ${s.stateOverlayError}`}>Chyba: {error}</div>}
+        {showEmpty && <div className={`${s.stateOverlay} ${s.stateOverlayEmpty}`}>Žádná data pro tento rozsah.</div>}
         {canRender && (
-          <div style={{ touchAction: 'none' }}>
+          <div className={s.chartTouch}>
             <AreaChart
               width={width}
               height={CHART_HEIGHT}
@@ -353,9 +384,6 @@ export function StockChart({ ticker, currency }: StockChartProps) {
               onMouseMove={handleChartMove}
               onMouseUp={handleChartUp}
               onMouseLeave={handleChartUp}
-              onTouchStart={handleChartDown}
-              onTouchMove={handleChartMove}
-              onTouchEnd={handleChartUp}
             >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -409,55 +437,35 @@ export function StockChart({ ticker, currency }: StockChartProps) {
             </AreaChart>
           </div>
         )}
-        {selectionStats && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              background: 'rgba(10, 18, 28, 0.92)',
-              border: `1px solid ${selectionStats.color}`,
-              borderRadius: 4,
-              padding: '6px 10px',
-              fontSize: 11,
-              color: '#cfd8e3',
-              zIndex: 3,
-              maxWidth: 'calc(100% - 8px)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
-              <span style={{ color: '#778899', fontSize: 10 }}>
-                {formatTooltipDate(selectionStats.startDate)} → {formatTooltipDate(selectionStats.endDate)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelection(null)}
-                aria-label="Zavřít výběr"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#778899',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  lineHeight: 1,
-                  padding: 0,
-                }}
-              >
-                ×
+      </div>
+
+      {/* Mobile range slider — hidden on desktop via CSS */}
+      <div className={s.sliderSection}>
+        {sliderOpen ? (
+          <div className={s.sliderWrap}>
+            <div className={s.sliderHeader}>
+              <span>Vybrat rozsah</span>
+              <button type="button" onClick={closeSlider} className={s.sliderCloseBtn}>
+                Zrušit
               </button>
             </div>
-            <div style={{ color: selectionStats.color, fontWeight: 600 }}>
-              {selectionStats.diff >= 0 ? '+' : '−'}
-              {formatPrice(Math.abs(selectionStats.diff), currency)} ({selectionStats.pct >= 0 ? '+' : ''}
-              {selectionStats.pct.toFixed(2)}%)
-            </div>
-            <div style={{ color: '#667788', fontSize: 10 }}>
-              {formatPrice(selectionStats.startPrice, currency)} → {formatPrice(selectionStats.endPrice, currency)}
-            </div>
+            <RangeSlider
+              key={sliderKey}
+              max={data.length - 1}
+              defaultStart={sliderDefaults.start}
+              defaultEnd={sliderDefaults.end}
+              onChange={handleSliderChange}
+            />
           </div>
+        ) : (
+          <button
+            type="button"
+            onClick={openSlider}
+            disabled={!hasData}
+            className={s.sliderToggleBtn}
+          >
+            Vybrat rozsah
+          </button>
         )}
       </div>
     </div>

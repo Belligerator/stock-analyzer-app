@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import s from './SelectionLookup.module.css';
 
 interface SelectionLookupProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -48,11 +49,7 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
         setButton(null);
         return;
       }
-      setButton({
-        term,
-        anchorX: rect.right,
-        anchorY: rect.top,
-      });
+      setButton({ term, anchorX: rect.right, anchorY: rect.top });
     }
 
     document.addEventListener('selectionchange', onSelectionChange);
@@ -68,9 +65,7 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
     function onDown(e: MouseEvent) {
       if (!active) return;
       if (!popoverRef.current) return;
-      if (!popoverRef.current.contains(e.target as Node)) {
-        setPopover(null);
-      }
+      if (!popoverRef.current.contains(e.target as Node)) setPopover(null);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setPopover(null);
@@ -105,14 +100,7 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const j = (await res.json()) as { explanation?: string; cached?: boolean };
       setPopover((prev) =>
-        prev
-          ? {
-              ...prev,
-              loading: false,
-              explanation: j.explanation ?? '',
-              cached: j.cached === true,
-            }
-          : prev,
+        prev ? { ...prev, loading: false, explanation: j.explanation ?? '', cached: j.cached === true } : prev,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'chyba';
@@ -160,27 +148,8 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
             openLookup();
           }}
           title={`Vysvětlit: ${button.term}`}
-          style={{
-            position: 'fixed',
-            top: btnTop,
-            left: btnLeft,
-            width: BTN_SIZE,
-            height: BTN_SIZE,
-            borderRadius: 11,
-            border: '1px solid #3b82f6',
-            background: 'rgba(59, 130, 246, 0.9)',
-            color: '#93c5fd',
-            fontSize: 12,
-            lineHeight: 1,
-            fontWeight: 600,
-            cursor: 'pointer',
-            zIndex: 9999,
-            padding: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-          }}
+          className={s.btn}
+          style={{ top: btnTop, left: btnLeft }}
         >
           ?
         </button>
@@ -189,102 +158,37 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
         <div
           ref={popoverRef}
           onMouseDown={(e) => e.stopPropagation()}
-          style={{
-            position: 'fixed',
-            top: popTop,
-            left: popLeft,
-            width: POP_W,
-            maxWidth: `calc(100vw - ${MARGIN * 2}px)`,
-            background: 'rgba(10, 18, 28, 0.98)',
-            border: '1px solid #223344',
-            borderRadius: 6,
-            padding: 12,
-            color: '#cfd8e3',
-            fontSize: 12,
-            lineHeight: 1.55,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.55)',
-            zIndex: 10000,
-          }}
+          className={s.popover}
+          style={{ top: popTop, left: popLeft }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'baseline',
-              marginBottom: 6,
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                color: '#93c5fd',
-                fontWeight: 600,
-                letterSpacing: '.04em',
-                textTransform: 'uppercase',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-              title={popover.term}
-            >
+          <div className={s.popoverHeader}>
+            <div className={s.popoverTerm} title={popover.term}>
               {popover.term}
             </div>
-            <button
-              type="button"
-              onClick={() => setPopover(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#778899',
-                cursor: 'pointer',
-                fontSize: 16,
-                lineHeight: 1,
-                padding: 0,
-              }}
-              aria-label="Zavřít"
-            >
+            <button type="button" onClick={() => setPopover(null)} className={s.popoverClose} aria-label="Zavřít">
               ×
             </button>
           </div>
           {popover.loading && !popover.explanation && (
-            <div style={{ color: '#778899', fontStyle: 'italic' }}>Generuji vysvětlení…</div>
+            <div className={s.loading}>Generuji vysvětlení…</div>
           )}
-          {!popover.loading && popover.error && <div style={{ color: '#ef4444' }}>Chyba: {popover.error}</div>}
+          {!popover.loading && popover.error && (
+            <div className={s.error}>Chyba: {popover.error}</div>
+          )}
           {popover.explanation && (
             <div style={{ whiteSpace: 'pre-wrap', color: '#e5ecf5', opacity: popover.loading ? 0.5 : 1 }}>
               {popover.explanation}
             </div>
           )}
           {(popover.explanation || popover.error) && (
-            <div
-              style={{
-                marginTop: 8,
-                paddingTop: 8,
-                borderTop: '1px solid #1c2533',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: 10,
-                color: '#556677',
-              }}
-            >
+            <div className={s.popoverFooter}>
               <span>{popover.cached ? 'Z cache' : 'Čerstvě vygenerováno'}</span>
               <button
                 type="button"
                 onClick={() => fetchExplanation(popover.term, true)}
                 disabled={popover.loading}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #22303d',
-                  color: '#93c5fd',
-                  cursor: popover.loading ? 'default' : 'pointer',
-                  padding: '3px 8px',
-                  borderRadius: 3,
-                  fontSize: 10,
-                  letterSpacing: '.04em',
-                  opacity: popover.loading ? 0.5 : 1,
-                }}
+                className={s.regenBtn}
+                style={{ cursor: popover.loading ? 'default' : 'pointer', opacity: popover.loading ? 0.5 : 1 }}
               >
                 {popover.loading ? '…' : 'Regenerovat'}
               </button>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Stock } from '../types/stocks';
 import { upside, formatPrice, formatPe, formatPct, gainColor } from '../utils/format';
+import s from './StockTable.module.css';
 
 type SortKey = 'ticker' | 'name' | 'price' | 'fwdPe' | 'gain52w' | 'upside' | 'cons';
 
@@ -40,9 +41,9 @@ export function StockTable({ stocks, onSelect }: StockTableProps) {
     }
   };
 
-  const valueFor = (s: Stock, k: SortKey): string | number | null => {
-    if (k === 'upside') return upside(s.price, s.avgTarget);
-    return s[k];
+  const valueFor = (st: Stock, k: SortKey): string | number | null => {
+    if (k === 'upside') return upside(st.price, st.avgTarget);
+    return st[k];
   };
 
   const sorted = [...stocks].sort((a, b) => {
@@ -54,54 +55,27 @@ export function StockTable({ stocks, onSelect }: StockTableProps) {
     return ((va as number) - (vb as number)) * sortDir;
   });
 
-  const ratingStyle = (cons: Stock['cons']) => {
+  const ratingStyle = (cons: Stock['cons']): React.CSSProperties => {
     if (cons === 'Strong Buy')
-      return {
-        background: 'rgba(34,197,94,.1)',
-        color: '#22c55e',
-        border: '1px solid rgba(34,197,94,.25)',
-      };
+      return { background: 'rgba(34,197,94,.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,.25)' };
     if (cons === 'Hold')
-      return {
-        background: 'rgba(148,163,184,.1)',
-        color: '#94a3b8',
-        border: '1px solid rgba(148,163,184,.2)',
-      };
+      return { background: 'rgba(148,163,184,.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,.2)' };
     if (cons === 'Sell' || cons === 'Strong Sell')
-      return {
-        background: 'rgba(239,68,68,.1)',
-        color: '#ef4444',
-        border: '1px solid rgba(239,68,68,.25)',
-      };
-    return {
-      background: 'rgba(250,204,21,.08)',
-      color: '#eab308',
-      border: '1px solid rgba(250,204,21,.2)',
-    };
+      return { background: 'rgba(239,68,68,.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,.25)' };
+    return { background: 'rgba(250,204,21,.08)', color: '#eab308', border: '1px solid rgba(250,204,21,.2)' };
   };
 
   return (
-    <div style={{ overflowX: 'auto', borderRadius: 6, border: '1px solid #1c2533' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-        <thead>
-          <tr style={{ background: '#111822' }}>
+    <div className={s.wrap}>
+      <table className={s.table}>
+        <thead className={s.thead}>
+          <tr>
             {columns.map((c) => (
               <th
                 key={c.key}
                 onClick={() => toggleSort(c.key)}
-                style={{
-                  padding: '8px 8px',
-                  textAlign: c.align,
-                  color: '#778899',
-                  fontWeight: 600,
-                  fontSize: 9,
-                  textTransform: 'uppercase',
-                  letterSpacing: '.06em',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  userSelect: 'none',
-                  borderBottom: '2px solid #1c2533',
-                }}
+                className={s.th}
+                style={{ textAlign: c.align }}
               >
                 {c.label}{' '}
                 <span style={{ opacity: sortKey === c.key ? 1 : 0.25 }}>
@@ -112,70 +86,43 @@ export function StockTable({ stocks, onSelect }: StockTableProps) {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((s, i) => {
-            const u = upside(s.price, s.avgTarget);
+          {sorted.map((st, i) => {
+            const u = upside(st.price, st.avgTarget);
             const fwdColor =
-              s.fwdPe == null ? '#b8c5d6' : s.fwdPe < 25 ? '#22c55e' : s.fwdPe > 35 ? '#f59e0b' : '#b8c5d6';
-            const hovered = hoverTicker === s.ticker;
+              st.fwdPe == null ? '#b8c5d6' : st.fwdPe < 25 ? '#22c55e' : st.fwdPe > 35 ? '#f59e0b' : '#b8c5d6';
+            const hovered = hoverTicker === st.ticker;
             const rowBg = hovered ? 'rgba(59,130,246,.08)' : i % 2 === 0 ? 'rgba(17,24,34,.4)' : 'transparent';
             return (
               <tr
-                key={s.ticker}
-                onClick={() => onSelect(s)}
-                onMouseEnter={() => setHoverTicker(s.ticker)}
+                key={st.ticker}
+                onClick={() => onSelect(st)}
+                onMouseEnter={() => setHoverTicker(st.ticker)}
                 onMouseLeave={() => setHoverTicker(null)}
-                title={s.note ? 'Klikni pro detail (obsahuje poznámku)' : 'Klikni pro detail'}
-                style={{
-                  background: rowBg,
-                  borderBottom: '1px solid #141c28',
-                  cursor: 'pointer',
-                  transition: 'background .1s',
-                }}
+                title={st.note ? 'Klikni pro detail (obsahuje poznámku)' : 'Klikni pro detail'}
+                className={s.row}
+                style={{ background: rowBg }}
               >
-                <td style={{ padding: '7px 8px', fontWeight: 700, color: '#60a5fa', whiteSpace: 'nowrap' }}>
-                  {s.ticker}
-                  {s.note && (
-                    <span
-                      title="Obsahuje poznámku"
-                      style={{
-                        display: 'inline-block',
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        background: '#60a5fa',
-                        marginLeft: 6,
-                        verticalAlign: 'middle',
-                      }}
-                    />
-                  )}
+                <td className={s.tdTicker}>
+                  {st.ticker}
+                  {st.note && <span title="Obsahuje poznámku" className={s.noteDot} />}
                 </td>
-                <td style={{ padding: '7px 8px', color: '#d0d8e4' }}>
-                  {s.name}
-                  {s.currency === 'EUR' ? ' (€)' : ''}
+                <td className={s.tdName}>
+                  {st.name}
+                  {st.currency === 'EUR' ? ' (€)' : ''}
                 </td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 600, color: '#e8edf3' }}>
-                  {formatPrice(s.price, s.currency)}
+                <td className={s.tdPrice}>{formatPrice(st.price, st.currency)}</td>
+                <td className={s.tdNum} style={{ color: fwdColor }}>
+                  {formatPe(st.fwdPe)}
                 </td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 600, color: fwdColor }}>
-                  {formatPe(s.fwdPe)}
+                <td className={s.tdNum} style={gainColor(st.gain52w)}>
+                  {formatPct(st.gain52w)}
                 </td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 600, ...gainColor(s.gain52w) }}>
-                  {formatPct(s.gain52w)}
-                </td>
-                <td style={{ padding: '7px 8px', textAlign: 'right', fontWeight: 600, ...gainColor(u) }}>
+                <td className={s.tdNum} style={gainColor(u)}>
                   {u != null ? formatPct(u) : '—'}
                 </td>
-                <td style={{ padding: '7px 8px', textAlign: 'center' }}>
-                  <span
-                    style={{
-                      padding: '2px 6px',
-                      borderRadius: 3,
-                      fontSize: 9,
-                      fontWeight: 600,
-                      ...ratingStyle(s.cons),
-                    }}
-                  >
-                    {s.cons}
+                <td className={s.tdCenter}>
+                  <span className={s.badge} style={ratingStyle(st.cons)}>
+                    {st.cons}
                   </span>
                 </td>
               </tr>

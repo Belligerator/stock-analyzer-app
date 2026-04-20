@@ -1,4 +1,5 @@
 import { formatDate } from '../utils/format';
+import s from './Header.module.css';
 
 interface HeaderProps {
   dataAsOf: string;
@@ -8,26 +9,14 @@ interface HeaderProps {
 
 export function Header({ dataAsOf, sources, rightSlot }: HeaderProps) {
   return (
-    <div
-      style={{
-        marginBottom: 20,
-        borderBottom: '1px solid #1c2533',
-        paddingBottom: 14,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: 12,
-      }}
-    >
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#e8edf3', margin: 0 }}>
-          Akciový přehled — {formatDate(dataAsOf)}
-        </h1>
-        <p style={{ fontSize: 10, color: '#556677', marginTop: 4 }}>
+    <div className={s.header}>
+      <div className={s.left}>
+        <h1 className={s.title}>Akciový přehled — {formatDate(dataAsOf)}</h1>
+        <p className={s.source}>
           {sources.map((s) => s.replace(/^https?:\/\//, '').replace(/\/$/, '')).join(' · ')}
         </p>
       </div>
-      {rightSlot && <div style={{ flexShrink: 0 }}>{rightSlot}</div>}
+      {rightSlot && <div className={s.right}>{rightSlot}</div>}
     </div>
   );
 }

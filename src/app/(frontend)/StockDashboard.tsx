@@ -7,6 +7,7 @@ import { SectorFilter } from '@/components/SectorFilter';
 import { StockTable } from '@/components/StockTable';
 import { Legend } from '@/components/Legend';
 import { StockModal } from '@/components/StockModal';
+import s from './StockDashboard.module.css';
 
 export function StockDashboard({ dataset }: { dataset: StocksDataset }) {
   const [filter, setFilter] = useState('All');
@@ -20,8 +21,8 @@ export function StockDashboard({ dataset }: { dataset: StocksDataset }) {
   );
 
   return (
-    <div style={{ minHeight: '100vh', padding: '20px 12px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className={s.page}>
+      <div className={s.inner}>
         <Header dataAsOf={dataset.dataAsOf} sources={dataset.sources} />
         <SectorFilter sectors={sectors} value={filter} onChange={setFilter} />
         <StockTable stocks={filtered} onSelect={setSelected} />

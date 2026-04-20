@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useDocumentInfo } from '@payloadcms/ui';
+import s from './RefreshStockButton.module.css';
 
 type ActionState =
   | { status: 'idle' }
@@ -77,35 +78,27 @@ export function RefreshStockButton() {
   const running = state.status === 'running';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 8,
-        alignItems: 'center',
-        flexWrap: 'wrap',
-      }}
-    >
-      <button type="button" onClick={() => run('refresh-stocks')} disabled={running} style={buttonStyle(running)}>
+    <div className={s.wrap}>
+      <button
+        type="button"
+        onClick={() => run('refresh-stocks')}
+        disabled={running}
+        className={s.btn}
+        style={{ cursor: running ? 'wait' : 'pointer', opacity: running ? 0.6 : 1 }}
+      >
         {state.status === 'running' && state.label === 'Refreshing…' ? state.label : 'Refresh metrics'}
       </button>
-      <button type="button" onClick={() => run('refresh-notes')} disabled={running} style={buttonStyle(running)}>
+      <button
+        type="button"
+        onClick={() => run('refresh-notes')}
+        disabled={running}
+        className={s.btn}
+        style={{ cursor: running ? 'wait' : 'pointer', opacity: running ? 0.6 : 1 }}
+      >
         {state.status === 'running' && state.label === 'Generating note…' ? state.label : 'Regenerate AI note'}
       </button>
-      {state.status === 'ok' && <span style={{ color: '#22c55e', fontSize: 12 }}>{state.message}</span>}
-      {state.status === 'error' && <span style={{ color: '#ef4444', fontSize: 12 }}>{state.message}</span>}
+      {state.status === 'ok' && <span className={s.statusOk}>{state.message}</span>}
+      {state.status === 'error' && <span className={s.statusError}>{state.message}</span>}
     </div>
   );
-}
-
-function buttonStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: '6px 12px',
-    fontSize: 12,
-    borderRadius: 4,
-    border: '1px solid var(--theme-elevation-150)',
-    background: 'var(--theme-elevation-100)',
-    color: 'var(--theme-text)',
-    cursor: disabled ? 'wait' : 'pointer',
-    opacity: disabled ? 0.6 : 1,
-  };
 }

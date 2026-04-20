@@ -6,36 +6,12 @@ import type { Stock } from '../types/stocks';
 import { formatDateTime, formatPe, formatPct, formatPrice, upside } from '../utils/format';
 import { StockChart } from './StockChart';
 import { SelectionLookup } from './SelectionLookup';
+import s from './StockModal.module.css';
 
 interface StockModalProps {
   stock: Stock | null;
   onClose: () => void;
 }
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: '#778899',
-  marginBottom: 3,
-  display: 'flex',
-  alignItems: 'center',
-  gap: 4,
-};
-
-const valueStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: '#e8edf3',
-  fontWeight: 600,
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontSize: 12,
-  color: '#94a3b8',
-  fontWeight: 600,
-  marginBottom: 10,
-  marginTop: 18,
-  paddingBottom: 4,
-  borderBottom: '1px solid #1c2533',
-};
 
 const GOOD = '#22c55e';
 const WARN = '#f59e0b';
@@ -307,21 +283,7 @@ function TooltipIcon({ id }: { id: string }) {
           if (show) setShow(false);
           else openTip();
         }}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 14,
-          height: 14,
-          borderRadius: '50%',
-          border: '1px solid #2a3a4a',
-          color: '#556677',
-          fontSize: 9,
-          cursor: 'pointer',
-          flexShrink: 0,
-          lineHeight: 1,
-          userSelect: 'none',
-        }}
+        className={s.tipIcon}
       >
         ?
       </span>
@@ -329,51 +291,14 @@ function TooltipIcon({ id }: { id: string }) {
         anchor &&
         typeof document !== 'undefined' &&
         createPortal(
-          <div
-            ref={tipRef}
-            style={{
-              position: 'fixed',
-              left: tipLeft,
-              top: tipTop,
-              width: TIP_W,
-              maxWidth: `calc(100vw - ${MARGIN * 2}px)`,
-              zIndex: 10000,
-              background: '#131e2e',
-              border: '1px solid #2a3a4a',
-              borderRadius: 4,
-              padding: '9px 11px',
-              fontSize: 11,
-              color: '#b8c5d6',
-              lineHeight: 1.55,
-              boxShadow: '0 8px 24px rgba(0,0,0,.55)',
-              whiteSpace: 'normal',
-              textAlign: 'left',
-            }}
-          >
+          <div ref={tipRef} className={s.tipPopup} style={{ left: tipLeft, top: tipTop }}>
             <div>{data.text}</div>
             {data.scale && (
-              <div
-                style={{
-                  marginTop: 8,
-                  paddingTop: 8,
-                  borderTop: '1px solid #2a3a4a',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 3,
-                }}
-              >
-                {data.scale.map((s) => (
-                  <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
-                    <span
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: '50%',
-                        background: s.color,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ color: '#94a3b8' }}>{s.label}</span>
+              <div className={s.tipScale}>
+                {data.scale.map((item) => (
+                  <div key={item.label} className={s.tipScaleItem}>
+                    <span className={s.tipScaleDot} style={{ background: item.color }} />
+                    <span className={s.tipScaleLabel}>{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -398,11 +323,13 @@ function Metric({
 }) {
   return (
     <div>
-      <div style={labelStyle}>
+      <div className={s.metricLabel}>
         {label}
         {tooltipId && <TooltipIcon id={tooltipId} />}
       </div>
-      <div style={{ ...valueStyle, color: color ?? valueStyle.color }}>{value}</div>
+      <div className={s.metricValue} style={color ? { color } : undefined}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -419,28 +346,12 @@ function formatRatio(v: number | null | undefined): string {
 
 function ratingBadge(cons: Stock['cons']): React.CSSProperties {
   if (cons === 'Strong Buy')
-    return {
-      background: 'rgba(34,197,94,.12)',
-      color: '#22c55e',
-      border: '1px solid rgba(34,197,94,.3)',
-    };
+    return { background: 'rgba(34,197,94,.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,.3)' };
   if (cons === 'Hold')
-    return {
-      background: 'rgba(148,163,184,.12)',
-      color: '#94a3b8',
-      border: '1px solid rgba(148,163,184,.25)',
-    };
+    return { background: 'rgba(148,163,184,.12)', color: '#94a3b8', border: '1px solid rgba(148,163,184,.25)' };
   if (cons === 'Sell' || cons === 'Strong Sell')
-    return {
-      background: 'rgba(239,68,68,.12)',
-      color: '#ef4444',
-      border: '1px solid rgba(239,68,68,.25)',
-    };
-  return {
-    background: 'rgba(250,204,21,.1)',
-    color: '#eab308',
-    border: '1px solid rgba(250,204,21,.22)',
-  };
+    return { background: 'rgba(239,68,68,.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,.25)' };
+  return { background: 'rgba(250,204,21,.1)', color: '#eab308', border: '1px solid rgba(250,204,21,.22)' };
 }
 
 const RATING_COLORS = {
@@ -467,68 +378,39 @@ function AnalystBreakdown({ bd }: { bd: NonNullable<Stock['analystBreakdown']> }
   ];
 
   return (
-    <div style={{ marginTop: 12 }}>
-      {/* Stacked bar */}
-      <div style={{ display: 'flex', height: 7, borderRadius: 4, overflow: 'hidden', gap: 1 }}>
+    <div className={s.analystWrap}>
+      <div className={s.analystStacked}>
         {bars.map((b) =>
           b.count > 0 ? (
             <div
               key={b.key}
               title={`${b.label}: ${b.count}`}
-              style={{
-                flex: b.count,
-                background: RATING_COLORS[b.key],
-                transition: 'flex .3s',
-              }}
+              style={{ flex: b.count, background: RATING_COLORS[b.key], transition: 'flex .3s' }}
             />
           ) : null,
         )}
       </div>
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
+      <div className={s.analystLegend}>
         {bars.map((b) =>
           b.count > 0 ? (
-            <div key={b.key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9 }}>
-              <div style={{ width: 6, height: 6, borderRadius: 1, background: RATING_COLORS[b.key], flexShrink: 0 }} />
-              <span style={{ color: '#778899' }}>{b.label}</span>
-              <span style={{ color: '#b8c5d6', fontWeight: 600 }}>{b.count}</span>
+            <div key={b.key} className={s.analystLegendItem}>
+              <div className={s.analystLegendDot} style={{ background: RATING_COLORS[b.key] }} />
+              <span className={s.analystLegendName}>{b.label}</span>
+              <span className={s.analystLegendCount}>{b.count}</span>
             </div>
           ) : null,
         )}
       </div>
-      {/* Consensus scale indicator */}
-      <div style={{ marginTop: 10 }}>
-        <div
-          style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: '#445566', marginBottom: 3 }}
-        >
+      <div className={s.analystScale}>
+        <div className={s.analystScaleLabels}>
           <span>Strong Buy</span>
           <span>Buy</span>
           <span>Hold</span>
           <span>Sell</span>
           <span>Strong Sell</span>
         </div>
-        <div
-          style={{
-            position: 'relative',
-            height: 4,
-            borderRadius: 2,
-            background: 'linear-gradient(to right, #22c55e, #86efac 25%, #94a3b8 50%, #f87171 75%, #ef4444)',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: `${markerPct}%`,
-              transform: 'translate(-50%, -50%)',
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: '#e8edf3',
-              border: '2px solid #0c1017',
-              boxShadow: '0 0 0 1px #778899',
-            }}
-          />
+        <div className={s.analystScaleBar}>
+          <div className={s.analystMarker} style={{ left: `${markerPct}%` }} />
         </div>
       </div>
     </div>
@@ -555,93 +437,40 @@ export function StockModal({ stock, onClose }: StockModalProps) {
   if (!stock) return null;
 
   const u = upside(stock.price, stock.avgTarget);
-  const grid3: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 16,
-  };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,.65)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '40px 16px',
-        zIndex: 1000,
-        overflowY: 'auto',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: 640,
-          background: '#0c1017',
-          border: '1px solid #1c2533',
-          borderRadius: 8,
-          padding: 20,
-          fontFamily: "'SF Mono','Fira Code','Cascadia Code',monospace",
-          color: '#b8c5d6',
-          boxShadow: '0 20px 60px rgba(0,0,0,.5)',
-        }}
-      >
+    <div onClick={onClose} className={s.overlay}>
+      <div onClick={(e) => e.stopPropagation()} className={s.panel}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div className={s.header}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color: '#60a5fa' }}>{stock.ticker}</span>
-              <span style={{ fontSize: 14, color: '#d0d8e4' }}>{stock.name}</span>
+            <div className={s.titleRow}>
+              <span className={s.ticker}>{stock.ticker}</span>
+              <span className={s.name}>{stock.name}</span>
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 10, color: '#778899' }}>
+            <div className={s.subRow}>
               <span>{stock.sector}</span>
               <span>·</span>
               <span>{stock.currency}</span>
               <span>·</span>
-              <span
-                style={{
-                  padding: '2px 8px',
-                  borderRadius: 3,
-                  fontSize: 9,
-                  fontWeight: 600,
-                  ...ratingBadge(stock.cons),
-                }}
-              >
+              <span className={s.badge} style={ratingBadge(stock.cons)}>
                 {stock.cons}
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Zavřít"
-            style={{
-              background: 'transparent',
-              border: '1px solid #1c2533',
-              color: '#778899',
-              borderRadius: 4,
-              width: 28,
-              height: 28,
-              cursor: 'pointer',
-              fontSize: 14,
-              fontFamily: 'inherit',
-            }}
-          >
+          <button onClick={onClose} aria-label="Zavřít" className={s.closeBtn}>
             ×
           </button>
         </div>
 
         {/* Vývoj ceny */}
-        <div style={{ marginTop: 14, marginBottom: 6 }}>
+        <div className={s.chartWrap}>
           <StockChart ticker={stock.ticker} currency={stock.currency} />
         </div>
 
         {/* Cena & valuace */}
-        <div style={sectionTitle}>Cena a valuace</div>
-        <div style={grid3}>
+        <div className={s.sectionTitle}>Cena a valuace</div>
+        <div className={s.grid3}>
           <Metric label="Cena" value={formatPrice(stock.price, stock.currency)} tooltipId="price" />
           <Metric label="P/E (TTM)" value={formatPe(stock.pe)} tooltipId="pe" color={colorPe(stock.pe)} />
           <Metric label="Fwd P/E" value={formatPe(stock.fwdPe)} tooltipId="fwdPe" color={colorFwdPe(stock.fwdPe)} />
@@ -656,8 +485,8 @@ export function StockModal({ stock, onClose }: StockModalProps) {
         </div>
 
         {/* Výkonnost */}
-        <div style={sectionTitle}>Výkonnost</div>
-        <div style={grid3}>
+        <div className={s.sectionTitle}>Výkonnost</div>
+        <div className={s.grid3}>
           <Metric
             label="52W"
             value={formatPct(stock.gain52w)}
@@ -680,8 +509,8 @@ export function StockModal({ stock, onClose }: StockModalProps) {
         </div>
 
         {/* Analytici */}
-        <div style={sectionTitle}>Analytici</div>
-        <div style={grid3}>
+        <div className={s.sectionTitle}>Analytici</div>
+        <div className={s.grid3}>
           <Metric
             label="Avg Target"
             value={formatPrice(stock.avgTarget ?? null, stock.currency)}
@@ -724,49 +553,19 @@ export function StockModal({ stock, onClose }: StockModalProps) {
         {/* Poznámka */}
         {stock.note && (
           <>
-            <div style={sectionTitle}>Poznámka</div>
-            <div
-              ref={noteRef}
-              style={{
-                background: 'rgba(59,130,246,.06)',
-                border: '1px solid rgba(59,130,246,.2)',
-                borderRadius: 4,
-                padding: 12,
-                fontSize: 12,
-                lineHeight: 1.6,
-                color: '#b8c5d6',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
+            <div className={s.sectionTitle}>Poznámka</div>
+            <div ref={noteRef} className={s.noteBox}>
               {stock.note}
             </div>
             <SelectionLookup containerRef={noteRef} context={stock.note} />
-            <div
-              style={{
-                marginTop: 8,
-                fontSize: 9.5,
-                lineHeight: 1.5,
-                color: '#556677',
-                fontStyle: 'italic',
-              }}
-            >
+            <div className={s.noteDisclaimer}>
               Generováno AI. Nejedná se o investiční doporučení ani nabídku ke koupi či prodeji cenných papírů. Pouze
               informativní účel.
             </div>
             {stock.newsSources && stock.newsSources.length > 0 && (
-              <div style={{ marginTop: 10 }}>
-                <div
-                  style={{
-                    fontSize: 9,
-                    color: '#556677',
-                    marginBottom: 6,
-                    textTransform: 'uppercase',
-                    letterSpacing: '.06em',
-                  }}
-                >
-                  Zdroje z Yahoo (recent news)
-                </div>
-                <ol style={{ margin: 0, paddingLeft: 18, fontSize: 10.5, lineHeight: 1.7, color: '#94a3b8' }}>
+              <div className={s.newsSection}>
+                <div className={s.newsLabel}>Zdroje z Yahoo (recent news)</div>
+                <ol className={s.newsList}>
                   {stock.newsSources.map((n, i) => {
                     const date = n.publishedAt
                       ? new Date(n.publishedAt).toLocaleDateString('cs-CZ', {
@@ -778,17 +577,11 @@ export function StockModal({ stock, onClose }: StockModalProps) {
                     const shortTitle = n.title.length > 70 ? n.title.slice(0, 70) + '…' : n.title;
                     return (
                       <li key={`${i}-${n.link}`}>
-                        <a
-                          href={n.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          title={n.title}
-                          style={{ color: '#60a5fa', textDecoration: 'none' }}
-                        >
+                        <a href={n.link} target="_blank" rel="noreferrer" title={n.title} className={s.newsLink}>
                           {n.publisher || 'Zdroj'}
                           {date ? ` (${date})` : ''}
                         </a>
-                        {n.title && <span style={{ color: '#556677', marginLeft: 6 }}>— {shortTitle}</span>}
+                        {n.title && <span className={s.newsSnippet}>— {shortTitle}</span>}
                       </li>
                     );
                   })}
@@ -799,19 +592,19 @@ export function StockModal({ stock, onClose }: StockModalProps) {
         )}
 
         {/* Metadata */}
-        <div style={sectionTitle}>Metadata</div>
-        <div style={{ fontSize: 10, color: '#778899', lineHeight: 1.8 }}>
+        <div className={s.sectionTitle}>Metadata</div>
+        <div className={s.meta}>
           <div>
-            <span style={{ color: '#556677' }}>Aktualizováno:</span> {formatDateTime(stock.updatedAt)}
+            <span className={s.metaKey}>Aktualizováno:</span> {formatDateTime(stock.updatedAt)}
           </div>
           {stock.sources && stock.sources.length > 0 && (
             <div>
-              <span style={{ color: '#556677' }}>Zdroje:</span>{' '}
-              {stock.sources.map((s, i) => (
-                <span key={s}>
+              <span className={s.metaKey}>Zdroje:</span>{' '}
+              {stock.sources.map((src, i) => (
+                <span key={src}>
                   {i > 0 ? ', ' : ''}
-                  <a href={s} target="_blank" rel="noreferrer" style={{ color: '#60a5fa', textDecoration: 'none' }}>
-                    {s.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  <a href={src} target="_blank" rel="noreferrer" className={s.metaLink}>
+                    {src.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                   </a>
                 </span>
               ))}
