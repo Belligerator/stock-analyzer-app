@@ -98,14 +98,19 @@ export interface StockMetrics {
 export type FxRates = Record<string, number>;
 
 export async function fetchFxRate(pair: string): Promise<number | null> {
+  const t = Date.now();
+  console.log(`[yahoo] fxRate ${pair} start`);
   try {
     const q = await yf.quote(pair);
     const rate =
       (q as { regularMarketPrice?: number }).regularMarketPrice ??
       (q as { postMarketPrice?: number }).postMarketPrice ??
       (q as { preMarketPrice?: number }).preMarketPrice;
-    return typeof rate === 'number' && Number.isFinite(rate) ? rate : null;
-  } catch {
+    const ok = typeof rate === 'number' && Number.isFinite(rate);
+    console.log(`[yahoo] fxRate ${pair} done ${Date.now() - t}ms ${ok ? `rate=${rate}` : 'no-rate'}`);
+    return ok ? (rate as number) : null;
+  } catch (err) {
+    console.log(`[yahoo] fxRate ${pair} FAIL ${Date.now() - t}ms ${err instanceof Error ? err.message : 'unknown'}`);
     return null;
   }
 }
@@ -133,9 +138,12 @@ export async function fetchStockMetrics(
   currency: string,
   fxRates: FxRates,
 ): Promise<StockMetrics> {
+  const t = Date.now();
+  console.log(`[yahoo] ${yahooSymbol} quoteSummary(metrics) start`);
   const summary = await yf.quoteSummary(yahooSymbol, {
     modules: ['price', 'summaryDetail', 'financialData', 'defaultKeyStatistics', 'assetProfile', 'recommendationTrend'],
   });
+  console.log(`[yahoo] ${yahooSymbol} quoteSummary(metrics) done ${Date.now() - t}ms`);
 
   const price = summary.price ?? {};
   const sd = summary.summaryDetail ?? {};
@@ -248,7 +256,12 @@ export async function fetchHistoricalPrices(
   period2: Date,
   interval: '1d' | '1wk',
 ): Promise<HistoricalPricePoint[]> {
+  const t = Date.now();
+  const p1 = period1.toISOString().slice(0, 10);
+  const p2 = period2.toISOString().slice(0, 10);
+  console.log(`[yahoo] ${yahooSymbol} historical(${interval}) ${p1}→${p2} start`);
   const rows = await yf.historical(yahooSymbol, { period1, period2, interval });
+  console.log(`[yahoo] ${yahooSymbol} historical(${interval}) done ${Date.now() - t}ms rows=${rows.length}`);
   const out: HistoricalPricePoint[] = [];
   for (const row of rows) {
     const close = (row as { close?: number; adjClose?: number }).close ?? (row as { adjClose?: number }).adjClose;
@@ -297,6 +310,8 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
   const reportsLimit = readLimit('YAHOO_REPORTS_COUNT', 3);
   const upgradesLimit = readLimit('YAHOO_UPGRADES_COUNT', 5);
 
+  const t = Date.now();
+  console.log(`[yahoo] ${yahooSymbol} parallel[search+insights+quoteSummary(upgrade+cal)] start`);
   const [searchResult, insightsResult, qs] = await Promise.allSettled([
     yf.search(yahooSymbol, { newsCount: newsLimit, quotesCount: 0 }),
     yf.insights(yahooSymbol, { reportsCount: reportsLimit }),
@@ -304,6 +319,9 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
       modules: ['upgradeDowngradeHistory', 'calendarEvents'],
     }),
   ]);
+  console.log(
+    `[yahoo] ${yahooSymbol} parallel done ${Date.now() - t}ms search=${searchResult.status} insights=${insightsResult.status} quoteSummary=${qs.status}`,
+  );
 
   if (searchResult.status === 'rejected') {
     console.log(`[yahoo-finance] ${yahooSymbol} search failed: ${searchResult.reason}`);

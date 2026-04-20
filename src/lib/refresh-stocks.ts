@@ -52,42 +52,63 @@ export async function refreshStocks(
   );
 
   const results: RefreshResult[] = [];
+  let idx = 0;
   for (const doc of docs) {
+    idx += 1;
     const ticker = doc.ticker as string;
     const currency = (doc.currency as string) ?? 'USD';
     const yahooSymbol = (doc.yahooSymbol as string) || ticker;
     const tickerStart = Date.now();
+    const tag = `${ticker.padEnd(6)} (${yahooSymbol}) [${idx}/${docs.length}]`;
+
+    console.log(`[refresh-stocks] ▶ ${tag} start`);
 
     try {
+      const t0 = Date.now();
+      console.log(`[refresh-stocks]   ${tag} fetchStockMetrics…`);
       const metrics = await fetchStockMetrics(yahooSymbol, currency, fxRates);
+      console.log(`[refresh-stocks]   ${tag} fetchStockMetrics done ${Date.now() - t0}ms price=${metrics.price ?? 'null'}`);
+
       let recentContext: RecentContext | null = null;
       let contextStatus = 'skipped';
+      const t1 = Date.now();
       try {
+        console.log(`[refresh-stocks]   ${tag} fetchTickerContext…`);
         recentContext = await fetchTickerContext(yahooSymbol);
         contextStatus = `ok (${recentContext.news.length}n/${recentContext.sigDevs.length}s/${recentContext.researchReports.length}r/${recentContext.upgrades.length}u)`;
+        console.log(`[refresh-stocks]   ${tag} fetchTickerContext done ${Date.now() - t1}ms ${contextStatus}`);
       } catch (ctxErr) {
         contextStatus = `err: ${ctxErr instanceof Error ? ctxErr.message : 'unknown'}`;
+        console.log(`[refresh-stocks]   ${tag} fetchTickerContext FAIL ${Date.now() - t1}ms ${contextStatus}`);
       }
+
+      const t2 = Date.now();
+      console.log(`[refresh-stocks]   ${tag} applyMetrics (DB update)…`);
       await applyMetrics(payload, doc.id as string | number, metrics, recentContext, req);
+      console.log(`[refresh-stocks]   ${tag} applyMetrics done ${Date.now() - t2}ms`);
 
       let priceStatus = 'skipped';
+      const t3 = Date.now();
       try {
+        console.log(`[refresh-stocks]   ${tag} updatePriceHistory…`);
         const priceSummary = await updatePriceHistory(ticker, yahooSymbol, payload, req);
         priceStatus = `d+${priceSummary.daily.added}/-${priceSummary.daily.trimmed} w+${priceSummary.weekly.added}/-${priceSummary.weekly.trimmed}`;
+        console.log(`[refresh-stocks]   ${tag} updatePriceHistory done ${Date.now() - t3}ms ${priceStatus}`);
       } catch (priceErr) {
         priceStatus = `err: ${priceErr instanceof Error ? priceErr.message : 'unknown'}`;
+        console.log(`[refresh-stocks]   ${tag} updatePriceHistory FAIL ${Date.now() - t3}ms ${priceStatus}`);
       }
 
       const tickerMs = Date.now() - tickerStart;
       console.log(
-        `[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) metrics=ok price=${metrics.price ?? 'null'} context=${contextStatus} prices=${priceStatus} ${tickerMs}ms`,
+        `[refresh-stocks] ✓ ${tag} total=${tickerMs}ms price=${metrics.price ?? 'null'} context=${contextStatus} prices=${priceStatus}`,
       );
       results.push({ ticker, status: 'ok' });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await markFailure(payload, doc.id as string | number, message, req);
       const tickerMs = Date.now() - tickerStart;
-      console.log(`[refresh-stocks]   ${ticker.padEnd(6)} (${yahooSymbol}) ERROR ${tickerMs}ms: ${message}`);
+      console.log(`[refresh-stocks] ✗ ${tag} ERROR ${tickerMs}ms: ${message}`);
       results.push({ ticker, status: 'error', error: message });
     }
 

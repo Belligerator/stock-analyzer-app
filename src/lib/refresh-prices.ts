@@ -104,27 +104,67 @@ async function upsertInterval(
   }
 
   const prices = await fetchHistoricalPrices(yahooSymbol, period1, now, yahooInterval);
-  let added = 0;
-  for (const row of prices) {
-    if (row.date > today) continue;
-    try {
-      await payload.create({
-        collection: 'price-history',
-        data: { ticker, interval, date: row.date, close: row.close },
-        req,
-      });
-      added += 1;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (!msg.includes('duplicate') && !msg.includes('unique')) {
-        throw err;
-      }
-    }
-  }
+  const rowsToInsert = prices.filter(r => r.date <= today);
+  const added = rowsToInsert.length > 0 ? await bulkInsertPrices(payload, ticker, interval, rowsToInsert) : 0;
 
   const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears), req);
 
   return { added, trimmed, skipped: false };
+}
+
+const BULK_BATCH_SIZE = 500;
+
+async function bulkInsertPrices(
+  payload: Payload,
+  ticker: string,
+  interval: PriceInterval,
+  rows: Array<{ date: string; close: number }>,
+): Promise<number> {
+  const pool = (payload.db as unknown as { pool?: { query: (sql: string, values: unknown[]) => Promise<{ rowCount: number | null }> } }).pool;
+  if (!pool) {
+    console.log(`[refresh-prices] bulk insert fallback: no pool, using per-row create (${rows.length} rows)`);
+    let added = 0;
+    for (const row of rows) {
+      try {
+        await payload.create({
+          collection: 'price-history',
+          data: { ticker, interval, date: row.date, close: row.close },
+        });
+        added += 1;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!msg.includes('duplicate') && !msg.includes('unique')) throw err;
+      }
+    }
+    return added;
+  }
+
+  let totalAdded = 0;
+  const nowIso = new Date().toISOString();
+
+  for (let i = 0; i < rows.length; i += BULK_BATCH_SIZE) {
+    const batch = rows.slice(i, i + BULK_BATCH_SIZE);
+    const placeholders: string[] = [];
+    const values: unknown[] = [];
+    let pi = 1;
+    for (const r of batch) {
+      placeholders.push(`($${pi++}, $${pi++}, $${pi++}, $${pi++}, $${pi++}, $${pi++})`);
+      values.push(ticker, interval, r.date, r.close, nowIso, nowIso);
+    }
+    const t = Date.now();
+    const res = await pool.query(
+      `INSERT INTO "price_history" ("ticker", "interval", "date", "close", "updated_at", "created_at")
+       VALUES ${placeholders.join(',')}
+       ON CONFLICT ("ticker", "date", "interval") DO NOTHING`,
+      values,
+    );
+    const inserted = res.rowCount ?? 0;
+    totalAdded += inserted;
+    console.log(
+      `[refresh-prices] bulk insert ${ticker} ${interval} batch ${i}..${i + batch.length} done ${Date.now() - t}ms inserted=${inserted}/${batch.length}`,
+    );
+  }
+  return totalAdded;
 }
 
 function toYmdCutoff(windowYears: number): string {
