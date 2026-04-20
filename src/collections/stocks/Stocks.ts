@@ -16,9 +16,6 @@ export const Stocks: CollectionConfig = {
     defaultColumns: ['ticker', 'name', 'sector', 'price', 'cons', 'metricsUpdatedAt'],
     group: 'Data',
     components: {
-      edit: {
-        beforeDocumentControls: ['/components/admin/RefreshStockButton#RefreshStockButton'],
-      },
       beforeListTable: ['/components/admin/BulkRefreshButtons#BulkRefreshButtons'],
     },
   },
@@ -33,6 +30,15 @@ export const Stocks: CollectionConfig = {
     afterChange: [afterChangeStock],
   },
   fields: [
+    {
+      name: 'stockActionsBar',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/admin/StockActionsBar#StockActionsBar',
+        },
+      },
+    },
     {
       type: 'tabs',
       tabs: [
@@ -178,6 +184,15 @@ export const Stocks: CollectionConfig = {
               ],
             },
             {
+              name: 'analystActivity',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '/components/admin/AnalystActivityPanel#AnalystActivityPanel',
+                },
+              },
+            },
+            {
               name: 'sources',
               type: 'array',
               fields: [{ name: 'url', type: 'text' }],
@@ -188,6 +203,16 @@ export const Stocks: CollectionConfig = {
               admin: {
                 readOnly: true,
                 description: 'Last successful metric refresh.',
+                date: { pickerAppearance: 'dayAndTime' },
+              },
+            },
+            {
+              name: 'analystLastActionDate',
+              type: 'date',
+              admin: {
+                readOnly: true,
+                description:
+                  'Nejčerstvější analyst action (max z upgrades + research reports). Proxy pro "jak staré jsou odhady".',
                 date: { pickerAppearance: 'dayAndTime' },
               },
             },

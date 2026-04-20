@@ -1,0 +1,79 @@
+.wrap {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 6px;
+  background: var(--theme-elevation-50);
+  max-width: 520px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  font-family: inherit;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-100);
+  color: var(--theme-text);
+  cursor: pointer;
+}
+
+.btnSecondary {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-100);
+  color: var(--theme-text);
+  cursor: pointer;
+}
+
+.link {
+  font-size: 12px;
+  color: var(--theme-text);
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.link:hover {
+  opacity: 1;
+}
+
+.statusOk {
+  color: #22c55e;
+  font-size: 12px;
+}
+
+.statusError {
+  color: #ef4444;
+  font-size: 12px;
+}

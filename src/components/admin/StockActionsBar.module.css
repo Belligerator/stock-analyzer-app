@@ -1,0 +1,9 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 16px;
+  padding: 12px 0 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--theme-elevation-100);
+}

@@ -169,7 +169,10 @@ async function applyMetrics(
 
   if (metrics.name) data.name = metrics.name;
   if (metrics.sector) data.sector = metrics.sector;
-  if (recentContext) data.recentContext = recentContext;
+  if (recentContext) {
+    data.recentContext = recentContext;
+    data.analystLastActionDate = recentContext.analystLastActionDate ?? null;
+  }
 
   await payload.update({
     collection: 'stocks',

@@ -37,6 +37,9 @@ export interface Stock {
     link: string;
     publishedAt: string;
   }>;
+  analystLastActionDate?: string | null;
+  recommendationTrend?: RecentContextRecommendationTrend[];
+  epsRevisions?: RecentContextEpsRevisions | null;
   updatedAt?: string;
 }
 
@@ -87,6 +90,23 @@ export interface RecentContextRecommendation {
   provider: string;
 }
 
+export interface RecentContextRecommendationTrend {
+  /** Offset string from Yahoo: '0m' (current), '-1m', '-2m', '-3m'. */
+  period: string;
+  strongBuy: number;
+  buy: number;
+  hold: number;
+  sell: number;
+  strongSell: number;
+}
+
+export interface RecentContextEpsRevisions {
+  upLast7days: number | null;
+  downLast7days: number | null;
+  upLast30days: number | null;
+  downLast30days: number | null;
+}
+
 export interface RecentContext {
   news: RecentContextNews[];
   sigDevs: RecentContextSigDev[];
@@ -94,5 +114,9 @@ export interface RecentContext {
   upgrades: RecentContextUpgrade[];
   recommendation: RecentContextRecommendation | null;
   nextEarnings: string | null;
+  recommendationTrend: RecentContextRecommendationTrend[];
+  epsRevisions: RecentContextEpsRevisions | null;
+  /** Max date across upgrades[].date and researchReports[].reportDate — best proxy for "when did coverage last move". */
+  analystLastActionDate: string | null;
   fetchedAt: string;
 }

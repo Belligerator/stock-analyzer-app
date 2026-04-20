@@ -8,6 +8,7 @@ import { Users } from './collections/users/Users';
 import { Stocks } from './collections/stocks/Stocks';
 import { PriceHistory } from './collections/price-history/PriceHistory';
 import { Explanations } from './collections/explanations/Explanations';
+import { StockSnapshots } from './collections/stock-snapshots/StockSnapshots';
 import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
@@ -20,8 +21,17 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      afterNavLinks: ['/components/admin/SnapshotCompareNavLink#SnapshotCompareNavLink'],
+      views: {
+        snapshotCompare: {
+          Component: '/components/admin/views/SnapshotCompareView#SnapshotCompareView',
+          path: '/snapshots/compare',
+        },
+      },
+    },
   },
-  collections: [Users, Stocks, PriceHistory, Explanations],
+  collections: [Users, Stocks, PriceHistory, Explanations, StockSnapshots],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

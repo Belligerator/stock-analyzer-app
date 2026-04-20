@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import s from './BulkRefreshButtons.module.css';
 
-type Kind = 'refresh-stocks' | 'refresh-notes';
+type Kind = 'refresh-stocks' | 'refresh-notes' | 'snapshot-all';
 
 type ActionState =
   | { status: 'idle' }
@@ -50,12 +50,21 @@ function formatCost(usd: number | undefined): string {
   return `$${usd.toFixed(4)}`;
 }
 
-async function callAction(kind: Kind): Promise<{ ok: boolean; message: string }> {
+type SnapshotAllResponse = {
+  ok?: boolean;
+  error?: string;
+  total?: number;
+  okCount?: number;
+  failed?: number;
+  durationMs?: number;
+};
+
+async function callAction(kind: Kind, body?: Record<string, unknown>): Promise<{ ok: boolean; message: string }> {
   const res = await fetch(`/api/actions/${kind}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({}),
+    body: JSON.stringify(body ?? {}),
   });
 
   if (kind === 'refresh-stocks') {
@@ -66,6 +75,17 @@ async function callAction(kind: Kind): Promise<{ ok: boolean; message: string }>
     return {
       ok: true,
       message: `Refreshed ${json.okCount ?? 0}/${json.total ?? 0} tickers in ${formatDuration(json.durationMs)} (${json.failed ?? 0} failed).`,
+    };
+  }
+
+  if (kind === 'snapshot-all') {
+    const json = (await res.json()) as SnapshotAllResponse;
+    if (!res.ok || json.ok === false) {
+      return { ok: false, message: json.error ?? `HTTP ${res.status}` };
+    }
+    return {
+      ok: true,
+      message: `Created ${json.okCount ?? 0}/${json.total ?? 0} snapshots in ${formatDuration(json.durationMs)} (${json.failed ?? 0} failed).`,
     };
   }
 
@@ -90,12 +110,12 @@ async function callAction(kind: Kind): Promise<{ ok: boolean; message: string }>
 export function BulkRefreshButtons() {
   const [state, setState] = useState<ActionState>({ status: 'idle' });
 
-  const run = async (kind: Kind) => {
+  const run = async (kind: Kind, body?: Record<string, unknown>) => {
     setState({ status: 'running', kind, startedAt: Date.now() });
     try {
-      const result = await callAction(kind);
+      const result = await callAction(kind, body);
       setState(result.ok ? { status: 'ok', message: result.message } : { status: 'error', message: result.message });
-      if (result.ok) {
+      if (result.ok && kind !== 'snapshot-all') {
         setTimeout(() => window.location.reload(), 1500);
       }
     } catch (err) {
@@ -104,9 +124,20 @@ export function BulkRefreshButtons() {
     }
   };
 
+  const runSnapshotAll = () => {
+    const label = window.prompt(
+      'Volitelný label pro všechny snapshoty (např. "Q2 2026"). Nech prázdné pro žádný.',
+      '',
+    );
+    if (label === null) return; // user cancelled
+    const body = label.trim().length > 0 ? { label: label.trim() } : {};
+    void run('snapshot-all', body);
+  };
+
   const running = state.status === 'running';
   const runningStocks = running && state.kind === 'refresh-stocks';
   const runningNotes = running && state.kind === 'refresh-notes';
+  const runningSnapshots = running && state.kind === 'snapshot-all';
 
   return (
     <div className={s.wrap}>
@@ -130,6 +161,16 @@ export function BulkRefreshButtons() {
         title="Spustí AI pipeline (Haiku triage → Sonnet/Opus per ticker). Může trvat minuty + stojí $0.10–$2 dle triggerů."
       >
         {runningNotes ? 'Generating AI notes…' : 'Regenerate all AI notes'}
+      </button>
+      <button
+        type="button"
+        onClick={runSnapshotAll}
+        disabled={running}
+        className={s.btn}
+        style={{ cursor: running ? 'wait' : 'pointer', opacity: running ? 0.6 : 1 }}
+        title="Vytvoří snapshot pro všechny aktivní akcie. Metriky se zkopírují z aktuálního stavu."
+      >
+        {runningSnapshots ? 'Creating snapshots…' : 'Create snapshots (all active)'}
       </button>
       {state.status === 'ok' && <span className={s.statusOk}>✓ {state.message}</span>}
       {state.status === 'error' && <span className={s.statusError}>✗ {state.message}</span>}

@@ -6,6 +6,7 @@ import type { Stock } from '../types/stocks';
 import { formatDateTime, formatPe, formatPct, formatPrice, upside } from '../utils/format';
 import { StockChart } from './StockChart';
 import { SelectionLookup } from './SelectionLookup';
+import { AnalystActivitySection } from './AnalystActivitySection';
 import s from './StockModal.module.css';
 
 interface StockModalProps {
@@ -549,6 +550,12 @@ export function StockModal({ stock, onClose }: StockModalProps) {
           />
         </div>
         {stock.analystBreakdown && <AnalystBreakdown bd={stock.analystBreakdown} />}
+        <AnalystActivitySection
+          lastAction={stock.analystLastActionDate}
+          metricsUpdatedAt={stock.updatedAt}
+          revisions={stock.epsRevisions}
+          trend={stock.recommendationTrend}
+        />
 
         {/* Poznámka */}
         {stock.note && (

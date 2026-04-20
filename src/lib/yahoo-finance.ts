@@ -2,7 +2,9 @@ import YahooFinance from 'yahoo-finance2';
 import type {
   Consensus,
   RecentContext,
+  RecentContextEpsRevisions,
   RecentContextNews,
+  RecentContextRecommendationTrend,
   RecentContextResearchReport,
   RecentContextSigDev,
   RecentContextUpgrade,
@@ -311,12 +313,12 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
   const upgradesLimit = readLimit('YAHOO_UPGRADES_COUNT', 5);
 
   const t = Date.now();
-  console.log(`[yahoo] ${yahooSymbol} parallel[search+insights+quoteSummary(upgrade+cal)] start`);
+  console.log(`[yahoo] ${yahooSymbol} parallel[search+insights+quoteSummary(upgrade+cal+trend+earnings)] start`);
   const [searchResult, insightsResult, qs] = await Promise.allSettled([
     yf.search(yahooSymbol, { newsCount: newsLimit, quotesCount: 0 }),
     yf.insights(yahooSymbol, { reportsCount: reportsLimit }),
     yf.quoteSummary(yahooSymbol, {
-      modules: ['upgradeDowngradeHistory', 'calendarEvents'],
+      modules: ['upgradeDowngradeHistory', 'calendarEvents', 'recommendationTrend', 'earningsTrend'],
     }),
   ]);
   console.log(
@@ -385,6 +387,8 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
 
   const upgrades: RecentContextUpgrade[] = [];
   let nextEarnings: string | null = null;
+  const recommendationTrend: RecentContextRecommendationTrend[] = [];
+  let epsRevisions: RecentContextEpsRevisions | null = null;
 
   if (qs.status === 'fulfilled') {
     const history = (qs.value.upgradeDowngradeHistory?.history ?? []) as Array<{
@@ -416,7 +420,58 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
     if (earningsDates.length > 0) {
       nextEarnings = toIsoDate(earningsDates[0]);
     }
+
+    const trendRows = (qs.value.recommendationTrend?.trend ?? []) as Array<{
+      period?: string;
+      strongBuy?: number;
+      buy?: number;
+      hold?: number;
+      sell?: number;
+      strongSell?: number;
+    }>;
+    for (const row of trendRows) {
+      recommendationTrend.push({
+        period: row.period ?? '',
+        strongBuy: row.strongBuy ?? 0,
+        buy: row.buy ?? 0,
+        hold: row.hold ?? 0,
+        sell: row.sell ?? 0,
+        strongSell: row.strongSell ?? 0,
+      });
+    }
+
+    const earningsTrendRows = (qs.value.earningsTrend?.trend ?? []) as Array<{
+      period?: string;
+      epsRevisions?: {
+        upLast7days?: number | null;
+        upLast30days?: number | null;
+        downLast7days?: number | null;
+        downLast30days?: number | null;
+      };
+    }>;
+    const currentYear =
+      earningsTrendRows.find((r) => r.period === '0y') ?? earningsTrendRows.find((r) => r.epsRevisions);
+    const rev = currentYear?.epsRevisions;
+    if (rev) {
+      epsRevisions = {
+        upLast7days: rev.upLast7days ?? null,
+        downLast7days: rev.downLast7days ?? null,
+        upLast30days: rev.upLast30days ?? null,
+        downLast30days: rev.downLast30days ?? null,
+      };
+    }
   }
+
+  const actionDates: number[] = [];
+  for (const u of upgrades) {
+    const t = Date.parse(u.date);
+    if (!Number.isNaN(t)) actionDates.push(t);
+  }
+  for (const r of researchReports) {
+    const t = Date.parse(r.reportDate);
+    if (!Number.isNaN(t)) actionDates.push(t);
+  }
+  const analystLastActionDate = actionDates.length > 0 ? new Date(Math.max(...actionDates)).toISOString() : null;
 
   return {
     news,
@@ -425,6 +480,9 @@ export async function fetchTickerContext(yahooSymbol: string): Promise<RecentCon
     upgrades,
     recommendation,
     nextEarnings,
+    recommendationTrend,
+    epsRevisions,
+    analystLastActionDate,
     fetchedAt: new Date().toISOString(),
   };
 }

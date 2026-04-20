@@ -1,0 +1,198 @@
+.wrap {
+  margin-top: 12px;
+  padding: 14px;
+  background: #0f1520;
+  border: 1px solid #1c2533;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.topRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.freshBlock,
+.revBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.freshHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.freshTitle,
+.revTitle,
+.trendTitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #778899;
+  letter-spacing: 0.05em;
+}
+
+.tone {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.toneFresh {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.toneStale {
+  background: rgba(234, 179, 8, 0.12);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.toneOld {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.toneUnknown {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.freshValue {
+  font-size: 13px;
+  color: #d0d8e4;
+  font-weight: 600;
+}
+
+.freshGap {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.freshHint,
+.revHint {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.revPills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 2px 0;
+}
+
+.revPill {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 10px;
+  background: #0c1017;
+  border: 1px solid #1c2533;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.revLabel {
+  color: #778899;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.revUp {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.revDown {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.revNone {
+  color: #778899;
+}
+
+.trendWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #1c2533;
+}
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 32px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.period {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.bar {
+  display: flex;
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #1c2533;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+}
+
+.total {
+  font-size: 10px;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 9px;
+  color: #778899;
+}
+
+.legendItem {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+@media (max-width: 520px) {
+  .topRow {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,6 +30,7 @@ type PayloadStockDoc = {
   sources?: Array<{ url?: string | null }> | null;
   note?: string | null;
   metricsUpdatedAt?: string | null;
+  analystLastActionDate?: string | null;
   recentContext?: RecentContext | null;
 };
 
@@ -89,6 +90,11 @@ export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
         link: n.link,
         publishedAt: n.publishedAt ?? '',
       })),
+    analystLastActionDate: doc.analystLastActionDate ?? null,
+    recommendationTrend: Array.isArray(doc.recentContext?.recommendationTrend)
+      ? doc.recentContext!.recommendationTrend
+      : [],
+    epsRevisions: doc.recentContext?.epsRevisions ?? null,
     updatedAt: doc.metricsUpdatedAt ?? undefined,
   };
 }
