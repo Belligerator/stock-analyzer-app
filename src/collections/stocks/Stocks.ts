@@ -1,6 +1,6 @@
-import { after } from 'next/server';
-import { refreshStocks } from '@/lib/refresh-stocks';
 import type { CollectionConfig } from 'payload';
+import { afterChangeStock } from './hooks/afterChange';
+import { beforeValidateStock } from './hooks/beforeValidate';
 
 const authedOnly = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -29,47 +29,8 @@ export const Stocks: CollectionConfig = {
     delete: authedOnly,
   },
   hooks: {
-    beforeChange: [
-      ({ data, operation }) => {
-        if (operation !== 'create' && operation !== 'update') return data;
-        if (data && typeof data.ticker === 'string') {
-          data.ticker = data.ticker.trim().toUpperCase();
-        }
-        if (data && typeof data.yahooSymbol === 'string') {
-          const raw = data.yahooSymbol.trim();
-          const match = raw.match(/\/quote\/([^/?#]+)/i);
-          data.yahooSymbol = match ? decodeURIComponent(match[1]) : raw;
-        }
-        return data;
-      },
-    ],
-    afterChange: [
-      ({ operation, doc, req }) => {
-        if (operation !== 'create') return doc;
-        const ticker = typeof doc?.ticker === 'string' ? doc.ticker : null;
-        if (!ticker) return doc;
-
-        const scheduleRefresh = async () => {
-          try {
-            req.payload.logger.info(`[stocks:afterChange] auto-refresh (bg) triggered for ${ticker}`);
-            await refreshStocks({ tickers: [ticker] });
-            req.payload.logger.info(`[stocks:afterChange] auto-refresh (bg) done for ${ticker}`);
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            req.payload.logger.error(`[stocks:afterChange] auto-refresh (bg) failed for ${ticker}: ${msg}`);
-          }
-        };
-
-        try {
-          after(scheduleRefresh);
-        } catch {
-          // fallback if next/server after() is not available in this context
-          void scheduleRefresh();
-        }
-
-        return doc;
-      },
-    ],
+    beforeValidate: [beforeValidateStock],
+    afterChange: [afterChangeStock],
   },
   fields: [
     {
@@ -87,7 +48,13 @@ export const Stocks: CollectionConfig = {
                   required: true,
                   unique: true,
                   index: true,
-                  admin: { width: '25%', description: 'App-level ticker (e.g. DSY, NVDA).' },
+                  admin: {
+                    width: '25%',
+                    description: 'App-level ticker (e.g. DSY, NVDA).',
+                    components: {
+                      Field: '/components/admin/TickerAutocomplete#TickerAutocomplete',
+                    },
+                  },
                 },
                 {
                   name: 'yahooSymbol',

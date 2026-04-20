@@ -78,4 +78,8 @@
   border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
+  display: inline-block;
+  max-width: 100px;
+  word-break: break-word;
+  line-height: 1.3;
 }

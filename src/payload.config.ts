@@ -4,10 +4,10 @@ import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 
-import { Users } from './collections/Users';
-import { Stocks } from './collections/Stocks';
-import { PriceHistory } from './collections/PriceHistory';
-import { Explanations } from './collections/Explanations';
+import { Users } from './collections/users/Users';
+import { Stocks } from './collections/stocks/Stocks';
+import { PriceHistory } from './collections/price-history/PriceHistory';
+import { Explanations } from './collections/explanations/Explanations';
 import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
