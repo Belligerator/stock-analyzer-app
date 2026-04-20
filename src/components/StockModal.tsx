@@ -741,6 +741,18 @@ export function StockModal({ stock, onClose }: StockModalProps) {
               {stock.note}
             </div>
             <SelectionLookup containerRef={noteRef} context={stock.note} />
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 9.5,
+                lineHeight: 1.5,
+                color: '#556677',
+                fontStyle: 'italic',
+              }}
+            >
+              Generováno AI. Nejedná se o investiční doporučení ani nabídku ke koupi či prodeji cenných papírů. Pouze
+              informativní účel.
+            </div>
             {stock.newsSources && stock.newsSources.length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div

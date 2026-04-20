@@ -126,7 +126,10 @@ Každý ticker má:
 - metrics (ticker, name, sector, cena, P/E, fwd P/E, gain52w, market cap, revenue growth, margin, ROE, D/E, PEG, target, cons rating)
 - recentContext: { news[], sigDevs[], researchReports[] s contentText, upgrades[], recommendation, nextEarnings }`;
 
-const ANALYSIS_SYSTEM_PROMPT = `Jsi finanční analytik. Dostaneš metriky + recent context jedné akcie a důvod proč byla flagnuta. Napiš kvalitativní poznámku v češtině (3–5 vět) se zdrojem + datumem u každého faktu.
+const ANALYSIS_SYSTEM_PROMPT = `Jsi finanční analytik. Dostaneš metriky + recent context jedné akcie a důvod proč byla flagnuta. Napiš kvalitativní poznámku v češtině (3–5 vět) se zdrojem + datumem u každého faktu, a na konci signál pro testovací účely.
+
+# Kontext použití
+Výstup se používá na TESTOVACÍM demo účtu (paper trading, bez reálných peněz) pro vyhodnocení kvality AI signálu — nejde o investiční doporučení v právním smyslu. Právní disclaimer se k poznámce připojuje automaticky až po tvém výstupu, ty ho sám NEPŘIDÁVEJ.
 
 # Pravidla
 1. **Rozepiš se.** Raději 3–5 vět s plným kontextem než jedna zkratkovitá. U události popiš: co, kdy, proč ovlivňuje konkrétní metriku, jestli se to časem vyrovná.
@@ -139,12 +142,17 @@ const ANALYSIS_SYSTEM_PROMPT = `Jsi finanční analytik. Dostaneš metriky + rec
    5. headlines (news[].title, sigDevs[].headline) — JEN jako signal, nikdy jako fakt
 4. **Tools používej uvážlivě** — web_search jen pokud chybí konkrétní fakt (datum, částka, jméno dealu). Web_fetch jen pokud je nutné ověřit title. NIKDY nefetchuj full 10-K / 10-Q / annual report.
 5. **Zdroj a datum** vždy u každého faktu. Formát: "(zdroj: Broadcom 10-K, FY2024)", "(Reuters, únor 2026)".
-6. **Pouze fakta a kontext** — žádné "buy", "sell", "great opportunity".
-7. **Cílová skupina**: smíšená (laik + zkušený investor). Obecné pojmy (P/E, margin) nevysvětluj, ale VŽDY vysvětli důsledek události pro konkrétní metriku.
-8. **Pokud nic konkrétního nevíš a data nejsou anomální** → vrať prázdný string "". Ale pokud data ukazují anomálii a konkrétní důvod neznáš, přesto napiš poznámku ("D/E 2.3 bez specifického známého katalyzátoru; stojí za dohledání").
+6. **Cílová skupina**: smíšená (laik + zkušený investor). Obecné pojmy (P/E, margin) nevysvětluj, ale VŽDY vysvětli důsledek události pro konkrétní metriku.
+7. **Pokud nic konkrétního nevíš a data nejsou anomální** → vrať prázdný string "". Ale pokud data ukazují anomálii a konkrétní důvod neznáš, přesto napiš poznámku ("D/E 2.3 bez specifického známého katalyzátoru; stojí za dohledání").
+8. **Signál na posledním řádku (pro demo účet)** — po analýze odřádkuj a na úplně poslední řádek napiš PŘESNĚ jednu z těchto hodnot, na základě kombinace metrik + kontextu. Nejde o investiční doporučení, ale o testovací klasifikaci signálu:
+   - \`SIGNÁL: KOUPIT\` — valuation + katalyzátor favorizují vstup (undervalued, pozitivní event, silné fundamenty)
+   - \`SIGNÁL: PRODAT\` — exit signál (přestřelený valuation, material negativní event, downgrade s důvody)
+   - \`SIGNÁL: DRŽET\` — držet existující pozici, ale není to atraktivní nová akce ani důvod k exitu
+   - \`SIGNÁL: NIC\` — nedostatek signálu / neutrální / nejednoznačné
+   Krátce (max 1 věta v závorce za signálem) odůvodni, např. \`SIGNÁL: DRŽET (valuation napnuté, ale AI capex drží růst)\`.
 
 # Výstup
-Vrať POUZE čistý text poznámky (3–5 vět). Žádný JSON, žádný markdown, žádné uvozovky kolem, žádný úvod typu "Zde je poznámka:". Pokud se opravdu nemáš co kvalifikovaného říct, vrať prázdný string.`;
+Vrať POUZE čistý text poznámky (3–5 vět) zakončený řádkem "SIGNÁL: ...". Žádný JSON, žádný markdown, žádné uvozovky kolem, žádný úvod typu "Zde je poznámka:". Pokud se opravdu nemáš co kvalifikovaného říct a data nejsou anomální, vrať prázdný string.`;
 
 function extractJsonArray(text: string): string {
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);

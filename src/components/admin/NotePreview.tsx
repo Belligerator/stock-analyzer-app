@@ -74,17 +74,31 @@ export function NotePreview() {
         )}
       </div>
       {trimmed ? (
-        <div
-          style={{
-            fontSize: 13,
-            lineHeight: 1.7,
-            color: 'var(--theme-text)',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-        >
-          {trimmed}
-        </div>
+        <>
+          <div
+            style={{
+              fontSize: 13,
+              lineHeight: 1.7,
+              color: 'var(--theme-text)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {trimmed}
+          </div>
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 10,
+              lineHeight: 1.5,
+              color: 'var(--theme-text-dim)',
+              fontStyle: 'italic',
+            }}
+          >
+            Generováno AI. Nejedná se o investiční doporučení ani nabídku ke koupi či prodeji cenných papírů. Pouze
+            informativní účel.
+          </div>
+        </>
       ) : (
         <div
           style={{
