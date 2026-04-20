@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { refreshStocks } from '@/lib/refresh-stocks';
 import type { CollectionConfig } from 'payload';
 
@@ -34,23 +35,38 @@ export const Stocks: CollectionConfig = {
         if (data && typeof data.ticker === 'string') {
           data.ticker = data.ticker.trim().toUpperCase();
         }
+        if (data && typeof data.yahooSymbol === 'string') {
+          const raw = data.yahooSymbol.trim();
+          const match = raw.match(/\/quote\/([^/?#]+)/i);
+          data.yahooSymbol = match ? decodeURIComponent(match[1]) : raw;
+        }
         return data;
       },
     ],
     afterChange: [
-      async ({ operation, doc, req }) => {
+      ({ operation, doc, req }) => {
         if (operation !== 'create') return doc;
         const ticker = typeof doc?.ticker === 'string' ? doc.ticker : null;
         if (!ticker) return doc;
 
+        const scheduleRefresh = async () => {
+          try {
+            req.payload.logger.info(`[stocks:afterChange] auto-refresh (bg) triggered for ${ticker}`);
+            await refreshStocks({ tickers: [ticker] });
+            req.payload.logger.info(`[stocks:afterChange] auto-refresh (bg) done for ${ticker}`);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            req.payload.logger.error(`[stocks:afterChange] auto-refresh (bg) failed for ${ticker}: ${msg}`);
+          }
+        };
+
         try {
-          req.payload.logger.info(`[stocks:afterChange] auto-refresh triggered for ${ticker}`);
-          await refreshStocks({ tickers: [ticker], req });
-          req.payload.logger.info(`[stocks:afterChange] auto-refresh done for ${ticker}`);
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          req.payload.logger.error(`[stocks:afterChange] auto-refresh failed for ${ticker}: ${msg}`);
+          after(scheduleRefresh);
+        } catch {
+          // fallback if next/server after() is not available in this context
+          void scheduleRefresh();
         }
+
         return doc;
       },
     ],
@@ -78,7 +94,8 @@ export const Stocks: CollectionConfig = {
                   type: 'text',
                   admin: {
                     width: '25%',
-                    description: 'Override when Yahoo symbol differs (e.g. DSY.PA for DSY).',
+                    description:
+                      'Yahoo symbol override (např. DSY.PA). Můžeš vložit i celou URL, např. https://finance.yahoo.com/quote/FF/ — symbol se vytáhne.',
                   },
                 },
                 {

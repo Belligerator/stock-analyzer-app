@@ -36,6 +36,7 @@ export async function refreshStocks(
     limit: 500,
     depth: 0,
     req,
+    overrideAccess: true,
   });
 
   const currencies = Array.from(new Set(docs.map((d) => (d.currency as string | undefined) ?? 'USD')));
@@ -154,7 +155,13 @@ async function applyMetrics(
     targetHigh: metrics.targetHigh,
     targetLow: metrics.targetLow,
     numAnalysts: metrics.numAnalysts,
-    analystBreakdown: metrics.analystBreakdown,
+    analystBreakdown: metrics.analystBreakdown ?? {
+      strongBuy: 0,
+      buy: 0,
+      hold: 0,
+      sell: 0,
+      strongSell: 0,
+    },
     sources: metrics.sources,
     metricsUpdatedAt: new Date().toISOString(),
     lastFetchError: null,
@@ -169,6 +176,7 @@ async function applyMetrics(
     id,
     data,
     req,
+    overrideAccess: true,
   });
 }
 
@@ -183,5 +191,6 @@ async function markFailure(
     id,
     data: { lastFetchError: message.slice(0, 500) },
     req,
+    overrideAccess: true,
   });
 }

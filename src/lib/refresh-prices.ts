@@ -55,6 +55,7 @@ async function latestDateFor(
     depth: 0,
     pagination: false,
     req,
+    overrideAccess: true,
   });
   const top = docs[0] as { date?: string } | undefined;
   return top?.date ?? null;
@@ -73,6 +74,7 @@ async function trimOlderThan(
       and: [{ ticker: { equals: ticker } }, { interval: { equals: interval } }, { date: { less_than: cutoffYmd } }],
     },
     req,
+    overrideAccess: true,
   });
   return (res.docs?.length ?? 0) as number;
 }
@@ -104,7 +106,7 @@ async function upsertInterval(
   }
 
   const prices = await fetchHistoricalPrices(yahooSymbol, period1, now, yahooInterval);
-  const rowsToInsert = prices.filter(r => r.date <= today);
+  const rowsToInsert = prices.filter((r) => r.date <= today);
   const added = rowsToInsert.length > 0 ? await bulkInsertPrices(payload, ticker, interval, rowsToInsert) : 0;
 
   const trimmed = await trimOlderThan(payload, ticker, interval, toYmdCutoff(windowYears), req);
@@ -112,7 +114,7 @@ async function upsertInterval(
   return { added, trimmed, skipped: false };
 }
 
-const BULK_BATCH_SIZE = 500;
+const BULK_BATCH_SIZE = 5000;
 
 async function bulkInsertPrices(
   payload: Payload,
@@ -120,7 +122,11 @@ async function bulkInsertPrices(
   interval: PriceInterval,
   rows: Array<{ date: string; close: number }>,
 ): Promise<number> {
-  const pool = (payload.db as unknown as { pool?: { query: (sql: string, values: unknown[]) => Promise<{ rowCount: number | null }> } }).pool;
+  const pool = (
+    payload.db as unknown as {
+      pool?: { query: (sql: string, values: unknown[]) => Promise<{ rowCount: number | null }> };
+    }
+  ).pool;
   if (!pool) {
     console.log(`[refresh-prices] bulk insert fallback: no pool, using per-row create (${rows.length} rows)`);
     let added = 0;

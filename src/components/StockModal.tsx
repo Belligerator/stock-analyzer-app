@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Stock } from '../types/stocks';
 import { formatDateTime, formatPe, formatPct, formatPrice, upside } from '../utils/format';
 import { StockChart } from './StockChart';
@@ -240,83 +241,147 @@ const TOOLTIPS: Record<string, TooltipData> = {
 
 function TooltipIcon({ id }: { id: string }) {
   const [show, setShow] = useState(false);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const triggerRef = useRef<HTMLSpanElement | null>(null);
+  const tipRef = useRef<HTMLDivElement | null>(null);
   const data = TOOLTIPS[id];
+
+  const openTip = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setAnchor({ x: rect.left + rect.width / 2, y: rect.bottom + 6 });
+    setShow(true);
+  };
+
+  useEffect(() => {
+    if (!show) return;
+    let active = false;
+    const arm = setTimeout(() => {
+      active = true;
+    }, 120);
+    const onDown = (e: Event) => {
+      if (!active) return;
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (tipRef.current?.contains(target)) return;
+      setShow(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShow(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(arm);
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [show]);
+
   if (!data) return null;
+
+  const TIP_W = 240;
+  const MARGIN = 8;
+  const TIP_H_ESTIMATE = data.scale ? 200 : 110;
+  let tipLeft = 0;
+  let tipTop = 0;
+  if (anchor && typeof window !== 'undefined') {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    tipLeft = Math.min(Math.max(MARGIN, anchor.x - TIP_W / 2), vw - TIP_W - MARGIN);
+    tipTop = anchor.y;
+    if (tipTop + TIP_H_ESTIMATE > vh - MARGIN) {
+      tipTop = Math.max(MARGIN, anchor.y - TIP_H_ESTIMATE - 18);
+    }
+  }
+
   return (
-    <span style={{ position: 'relative', display: 'inline-flex' }}>
+    <>
       <span
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
+        ref={triggerRef}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (show) setShow(false);
+          else openTip();
+        }}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: 12,
-          height: 12,
+          width: 14,
+          height: 14,
           borderRadius: '50%',
           border: '1px solid #2a3a4a',
           color: '#556677',
           fontSize: 9,
-          cursor: 'help',
+          cursor: 'pointer',
           flexShrink: 0,
           lineHeight: 1,
+          userSelect: 'none',
         }}
       >
         ?
       </span>
-      {show && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 'calc(100% + 6px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 200,
-            background: '#131e2e',
-            border: '1px solid #2a3a4a',
-            borderRadius: 4,
-            padding: '9px 11px',
-            fontSize: 10,
-            color: '#b8c5d6',
-            lineHeight: 1.55,
-            width: 240,
-            boxShadow: '0 4px 16px rgba(0,0,0,.5)',
-            pointerEvents: 'none',
-            whiteSpace: 'normal',
-            textAlign: 'left',
-          }}
-        >
-          <div>{data.text}</div>
-          {data.scale && (
-            <div
-              style={{
-                marginTop: 8,
-                paddingTop: 8,
-                borderTop: '1px solid #2a3a4a',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 3,
-              }}
-            >
-              {data.scale.map((s) => (
-                <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 9.5 }}>
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      background: s.color,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span style={{ color: '#94a3b8' }}>{s.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </span>
+      {show &&
+        anchor &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={tipRef}
+            style={{
+              position: 'fixed',
+              left: tipLeft,
+              top: tipTop,
+              width: TIP_W,
+              maxWidth: `calc(100vw - ${MARGIN * 2}px)`,
+              zIndex: 10000,
+              background: '#131e2e',
+              border: '1px solid #2a3a4a',
+              borderRadius: 4,
+              padding: '9px 11px',
+              fontSize: 11,
+              color: '#b8c5d6',
+              lineHeight: 1.55,
+              boxShadow: '0 8px 24px rgba(0,0,0,.55)',
+              whiteSpace: 'normal',
+              textAlign: 'left',
+            }}
+          >
+            <div>{data.text}</div>
+            {data.scale && (
+              <div
+                style={{
+                  marginTop: 8,
+                  paddingTop: 8,
+                  borderTop: '1px solid #2a3a4a',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                }}
+              >
+                {data.scale.map((s) => (
+                  <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
+                    <span
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        background: s.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ color: '#94a3b8' }}>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
