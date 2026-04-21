@@ -15,8 +15,14 @@ export interface Stock {
   cons: Consensus;
   marketCap?: number | null;
   revenueGrowthYoY?: number | null;
+  earningsGrowthYoY?: number | null;
   profitMargin?: number | null;
+  grossMargin?: number | null;
+  operatingMargin?: number | null;
   roe?: number | null;
+  roa?: number | null;
+  freeCashFlow?: number | null;
+  evToEbitda?: number | null;
   debtToEquity?: number | null;
   peg?: number | null;
   targetHigh?: number | null;
@@ -28,6 +34,12 @@ export interface Stock {
     hold: number;
     sell: number;
     strongSell: number;
+  } | null;
+  insiderActivity?: {
+    netPercent: number | null;
+    buyCount: number | null;
+    sellCount: number | null;
+    period: string | null;
   } | null;
   note?: string;
   sources?: string[];

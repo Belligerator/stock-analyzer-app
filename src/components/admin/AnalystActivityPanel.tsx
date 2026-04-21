@@ -13,7 +13,10 @@ function fmtDate(iso: string | undefined | null): string {
   return d.toLocaleString('cs-CZ', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function staleness(lastAction: string | null | undefined, referenceAt: string | null | undefined): {
+function staleness(
+  lastAction: string | null | undefined,
+  referenceAt: string | null | undefined,
+): {
   days: number | null;
   tone: Tone;
   label: string;
@@ -49,9 +52,7 @@ export function AnalystActivityPanel() {
         <div className={s.header}>
           <strong>Aktivita analytiků</strong>
         </div>
-        <div className={s.empty}>
-          Data se naplní po nejbližším refreshi metrik.
-        </div>
+        <div className={s.empty}>Data se naplní po nejbližším refreshi metrik.</div>
       </div>
     );
   }
@@ -60,18 +61,18 @@ export function AnalystActivityPanel() {
     st.tone === 'fresh'
       ? s.toneFresh
       : st.tone === 'stale'
-      ? s.toneStale
-      : st.tone === 'old'
-      ? s.toneOld
-      : s.toneUnknown;
+        ? s.toneStale
+        : st.tone === 'old'
+          ? s.toneOld
+          : s.toneUnknown;
   const toneLabel =
     st.tone === 'fresh'
       ? '● čerstvé'
       : st.tone === 'stale'
-      ? '● zastarávající'
-      : st.tone === 'old'
-      ? '● staré'
-      : '○ neznámé';
+        ? '● zastarávající'
+        : st.tone === 'old'
+          ? '● staré'
+          : '○ neznámé';
 
   return (
     <div className={s.wrap}>

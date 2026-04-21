@@ -111,18 +111,19 @@ function RangeSlider({
     });
   };
 
-  useEffect(() => () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
 
   const startPct = max > 0 ? (defaultStart / max) * 100 : 0;
   const endPct = max > 0 ? (defaultEnd / max) * 100 : 100;
 
   return (
     <div className={s.sliderTrack}>
-      <div
-        ref={fillRef}
-        className={s.sliderFill}
-        style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
-      />
+      <div ref={fillRef} className={s.sliderFill} style={{ left: `${startPct}%`, right: `${100 - endPct}%` }} />
       <input
         ref={startRef}
         type="range"
@@ -296,7 +297,12 @@ export function StockChart({ ticker, currency }: StockChartProps) {
 
   const { currentPrice, deltaAbs, deltaPct, deltaColor } = useMemo(() => {
     if (data.length < 2) {
-      return { currentPrice: null as number | null, deltaAbs: null as number | null, deltaPct: null as number | null, deltaColor: '#94a3b8' };
+      return {
+        currentPrice: null as number | null,
+        deltaAbs: null as number | null,
+        deltaPct: null as number | null,
+        deltaColor: '#94a3b8',
+      };
     }
     const first = data[0].close;
     const last = data[data.length - 1].close;
@@ -311,9 +317,7 @@ export function StockChart({ ticker, currency }: StockChartProps) {
   return (
     <div className={s.chart}>
       <div className={s.priceHeader}>
-        <div className={s.currentPrice}>
-          {currentPrice != null ? formatPrice(currentPrice, currency) : '—'}
-        </div>
+        <div className={s.currentPrice}>{currentPrice != null ? formatPrice(currentPrice, currency) : '—'}</div>
         {deltaAbs != null && deltaPct != null && (
           <div style={{ fontSize: 12, color: deltaColor, fontWeight: 500 }}>
             {formatSignedPrice(deltaAbs)} ({formatSignedPct(deltaPct)})
@@ -349,12 +353,7 @@ export function StockChart({ ticker, currency }: StockChartProps) {
             <span className={s.selectionDate}>
               {formatTooltipDate(selectionStats.startDate)} → {formatTooltipDate(selectionStats.endDate)}
             </span>
-            <button
-              type="button"
-              onClick={closeSlider}
-              aria-label="Zavřít výběr"
-              className={s.selectionCloseBtn}
-            >
+            <button type="button" onClick={closeSlider} aria-label="Zavřít výběr" className={s.selectionCloseBtn}>
               ×
             </button>
           </div>
@@ -458,12 +457,7 @@ export function StockChart({ ticker, currency }: StockChartProps) {
             />
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={openSlider}
-            disabled={!hasData}
-            className={s.sliderToggleBtn}
-          >
+          <button type="button" onClick={openSlider} disabled={!hasData} className={s.sliderToggleBtn}>
             Vybrat rozsah
           </button>
         )}

@@ -53,9 +53,7 @@ export function NotePreview() {
     <div className={s.wrap}>
       <div className={s.header}>
         <strong className={s.headerTitle}>AI Note preview</strong>
-        {updatedAt && (
-          <span className={s.headerDate}>Last generated: {formatDate(updatedAt)}</span>
-        )}
+        {updatedAt && <span className={s.headerDate}>Last generated: {formatDate(updatedAt)}</span>}
       </div>
       {trimmed ? (
         <>
@@ -66,9 +64,7 @@ export function NotePreview() {
           </div>
         </>
       ) : (
-        <div className={s.empty}>
-          Poznámka nebyla vygenerována. Klikni &quot;Regenerate AI note&quot; výše.
-        </div>
+        <div className={s.empty}>Poznámka nebyla vygenerována. Klikni &quot;Regenerate AI note&quot; výše.</div>
       )}
       {news.length > 0 && (
         <div className={s.newsSection}>
@@ -81,9 +77,7 @@ export function NotePreview() {
                   {n.publishedAt ? ` (${formatShortDate(n.publishedAt)})` : ''}
                 </a>
                 {n.title && (
-                  <span className={s.newsSnippet}>
-                    — {n.title.length > 80 ? n.title.slice(0, 80) + '…' : n.title}
-                  </span>
+                  <span className={s.newsSnippet}>— {n.title.length > 80 ? n.title.slice(0, 80) + '…' : n.title}</span>
                 )}
               </li>
             ))}

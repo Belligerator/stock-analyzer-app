@@ -135,15 +135,30 @@ export const Stocks: CollectionConfig = {
               fields: [
                 { name: 'gain52w', type: 'number', admin: { width: '25%', description: '52-week change (%)' } },
                 { name: 'marketCap', type: 'number', admin: { width: '25%', description: 'USD billions' } },
-                { name: 'revenueGrowthYoY', type: 'number', admin: { width: '25%', description: '%' } },
-                { name: 'profitMargin', type: 'number', admin: { width: '25%', description: '%' } },
+                { name: 'evToEbitda', type: 'number', admin: { width: '25%', description: 'EV / EBITDA (x)' } },
+                { name: 'freeCashFlow', type: 'number', admin: { width: '25%', description: 'FCF (USD billions)' } },
               ],
             },
             {
               type: 'row',
               fields: [
-                { name: 'roe', type: 'number', admin: { width: '50%', description: 'Return on Equity (%)' } },
-                { name: 'debtToEquity', type: 'number', admin: { width: '50%' } },
+                { name: 'revenueGrowthYoY', type: 'number', admin: { width: '25%', description: 'Revenue YoY (%)' } },
+                { name: 'earningsGrowthYoY', type: 'number', admin: { width: '25%', description: 'Earnings YoY (%)' } },
+                { name: 'grossMargin', type: 'number', admin: { width: '25%', description: 'Gross Margin (%)' } },
+                {
+                  name: 'operatingMargin',
+                  type: 'number',
+                  admin: { width: '25%', description: 'Operating Margin (%)' },
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                { name: 'profitMargin', type: 'number', admin: { width: '25%', description: 'Net Profit Margin (%)' } },
+                { name: 'roe', type: 'number', admin: { width: '25%', description: 'Return on Equity (%)' } },
+                { name: 'roa', type: 'number', admin: { width: '25%', description: 'Return on Assets (%)' } },
+                { name: 'debtToEquity', type: 'number', admin: { width: '25%', description: 'Debt / Equity (x)' } },
               ],
             },
             {
@@ -179,6 +194,26 @@ export const Stocks: CollectionConfig = {
                     { name: 'hold', type: 'number', admin: { width: '20%' } },
                     { name: 'sell', type: 'number', admin: { width: '20%' } },
                     { name: 'strongSell', type: 'number', admin: { width: '20%' } },
+                  ],
+                },
+              ],
+            },
+            {
+              name: 'insiderActivity',
+              type: 'group',
+              admin: { description: 'Net share purchase activity insiderů za posledních ~6 měsíců (z Yahoo).' },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'netPercent',
+                      type: 'number',
+                      admin: { width: '30%', description: 'Net % insider shares (kladné = nákupy > prodeje).' },
+                    },
+                    { name: 'buyCount', type: 'number', admin: { width: '25%', description: 'Počet nákupů' } },
+                    { name: 'sellCount', type: 'number', admin: { width: '25%', description: 'Počet prodejů' } },
+                    { name: 'period', type: 'text', admin: { width: '20%', description: 'Období (např. 6m)' } },
                   ],
                 },
               ],

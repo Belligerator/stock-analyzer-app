@@ -71,12 +71,7 @@ export function StockTable({ stocks, onSelect }: StockTableProps) {
         <thead className={s.thead}>
           <tr>
             {columns.map((c) => (
-              <th
-                key={c.key}
-                onClick={() => toggleSort(c.key)}
-                className={s.th}
-                style={{ textAlign: c.align }}
-              >
+              <th key={c.key} onClick={() => toggleSort(c.key)} className={s.th} style={{ textAlign: c.align }}>
                 {c.label}{' '}
                 <span style={{ opacity: sortKey === c.key ? 1 : 0.25 }}>
                   {sortKey === c.key ? (sortDir === 1 ? '▲' : '▼') : '↕'}

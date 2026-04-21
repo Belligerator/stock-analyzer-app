@@ -9,9 +9,15 @@ const FROZEN_KEYS = [
   'peg',
   'gain52w',
   'marketCap',
+  'evToEbitda',
   'revenueGrowthYoY',
+  'earningsGrowthYoY',
   'profitMargin',
+  'grossMargin',
+  'operatingMargin',
   'roe',
+  'roa',
+  'freeCashFlow',
   'debtToEquity',
   'avgTarget',
   'targetHigh',
@@ -19,6 +25,7 @@ const FROZEN_KEYS = [
   'numAnalysts',
   'cons',
   'analystBreakdown',
+  'insiderActivity',
   'sources',
   'note',
   'recentContext',
@@ -49,8 +56,8 @@ export const beforeValidateSnapshot: CollectionBeforeValidateHook = async ({ dat
     typeof stockRef === 'number' || typeof stockRef === 'string'
       ? stockRef
       : stockRef && typeof stockRef === 'object' && 'id' in stockRef
-      ? (stockRef as { id: number | string }).id
-      : null;
+        ? (stockRef as { id: number | string }).id
+        : null;
   if (stockId == null) return data;
 
   let stock: Stock | null = null;

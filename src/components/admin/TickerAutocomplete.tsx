@@ -192,9 +192,7 @@ export function TickerAutocomplete({ path, field }: Props) {
               >
                 <div className={s.itemTop}>
                   <span className={s.symbol}>{q.symbol}</span>
-                  <span className={s.meta}>
-                    {[q.typeDisp ?? q.quoteType, q.exchange].filter(Boolean).join(' · ')}
-                  </span>
+                  <span className={s.meta}>{[q.typeDisp ?? q.quoteType, q.exchange].filter(Boolean).join(' · ')}</span>
                 </div>
                 <div className={s.name}>{q.longname ?? q.shortname ?? ''}</div>
               </div>

@@ -13,8 +13,14 @@ type PayloadStockDoc = {
   cons?: Consensus | null;
   marketCap?: number | null;
   revenueGrowthYoY?: number | null;
+  earningsGrowthYoY?: number | null;
   profitMargin?: number | null;
+  grossMargin?: number | null;
+  operatingMargin?: number | null;
   roe?: number | null;
+  roa?: number | null;
+  freeCashFlow?: number | null;
+  evToEbitda?: number | null;
   debtToEquity?: number | null;
   peg?: number | null;
   targetHigh?: number | null;
@@ -26,6 +32,12 @@ type PayloadStockDoc = {
     hold?: number | null;
     sell?: number | null;
     strongSell?: number | null;
+  } | null;
+  insiderActivity?: {
+    netPercent?: number | null;
+    buyCount?: number | null;
+    sellCount?: number | null;
+    period?: string | null;
   } | null;
   sources?: Array<{ url?: string | null }> | null;
   note?: string | null;
@@ -72,14 +84,28 @@ export function mapStockDoc(doc: PayloadStockDoc): ViewStock {
     cons: (doc.cons ?? 'Hold') as Consensus,
     marketCap: doc.marketCap ?? null,
     revenueGrowthYoY: doc.revenueGrowthYoY ?? null,
+    earningsGrowthYoY: doc.earningsGrowthYoY ?? null,
     profitMargin: doc.profitMargin ?? null,
+    grossMargin: doc.grossMargin ?? null,
+    operatingMargin: doc.operatingMargin ?? null,
     roe: doc.roe ?? null,
+    roa: doc.roa ?? null,
+    freeCashFlow: doc.freeCashFlow ?? null,
+    evToEbitda: doc.evToEbitda ?? null,
     debtToEquity: doc.debtToEquity ?? null,
     peg: doc.peg ?? null,
     targetHigh: doc.targetHigh ?? null,
     targetLow: doc.targetLow ?? null,
     numAnalysts: doc.numAnalysts ?? null,
     analystBreakdown: breakdown,
+    insiderActivity: doc.insiderActivity
+      ? {
+          netPercent: doc.insiderActivity.netPercent ?? null,
+          buyCount: doc.insiderActivity.buyCount ?? null,
+          sellCount: doc.insiderActivity.sellCount ?? null,
+          period: doc.insiderActivity.period ?? null,
+        }
+      : null,
     note: stripCiteTags(doc.note),
     sources: (doc.sources ?? []).map((s) => s.url).filter((u): u is string => typeof u === 'string' && u.length > 0),
     newsSources: (doc.recentContext?.news ?? [])

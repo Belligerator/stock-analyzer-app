@@ -80,8 +80,14 @@ export interface StockMetrics {
   cons: Consensus;
   marketCap: number | null;
   revenueGrowthYoY: number | null;
+  earningsGrowthYoY: number | null;
   profitMargin: number | null;
+  grossMargin: number | null;
+  operatingMargin: number | null;
   roe: number | null;
+  roa: number | null;
+  freeCashFlow: number | null;
+  evToEbitda: number | null;
   debtToEquity: number | null;
   peg: number | null;
   targetHigh: number | null;
@@ -93,6 +99,12 @@ export interface StockMetrics {
     hold: number;
     sell: number;
     strongSell: number;
+  } | null;
+  insiderActivity: {
+    netPercent: number | null;
+    buyCount: number | null;
+    sellCount: number | null;
+    period: string | null;
   } | null;
   sources: Array<{ url: string }>;
 }
@@ -143,7 +155,15 @@ export async function fetchStockMetrics(
   const t = Date.now();
   console.log(`[yahoo] ${yahooSymbol} quoteSummary(metrics) start`);
   const summary = await yf.quoteSummary(yahooSymbol, {
-    modules: ['price', 'summaryDetail', 'financialData', 'defaultKeyStatistics', 'assetProfile', 'recommendationTrend'],
+    modules: [
+      'price',
+      'summaryDetail',
+      'financialData',
+      'defaultKeyStatistics',
+      'assetProfile',
+      'recommendationTrend',
+      'netSharePurchaseActivity',
+    ],
   });
   console.log(`[yahoo] ${yahooSymbol} quoteSummary(metrics) done ${Date.now() - t}ms`);
 
@@ -153,6 +173,14 @@ export async function fetchStockMetrics(
   const ks = summary.defaultKeyStatistics ?? {};
   const ap = summary.assetProfile ?? {};
   const rt = summary.recommendationTrend?.trend ?? [];
+  const ns = (summary as { netSharePurchaseActivity?: unknown }).netSharePurchaseActivity as
+    | {
+        period?: string;
+        netPercentInsiderShares?: number;
+        buyInfoCount?: number;
+        sellInfoCount?: number;
+      }
+    | undefined;
 
   const name =
     (price as { longName?: string; shortName?: string }).longName ??
@@ -173,6 +201,22 @@ export async function fetchStockMetrics(
   const fxToUsd = fxRates[currency] ?? 1;
   const marketCapUsdB =
     marketCapLocal != null && currency !== 'USD' ? billions(marketCapLocal * fxToUsd) : billions(marketCapLocal);
+
+  const fcfLocal = (fd as { freeCashflow?: number }).freeCashflow;
+  const fcfUsdB = fcfLocal != null && currency !== 'USD' ? billions(fcfLocal * fxToUsd) : billions(fcfLocal ?? null);
+
+  const insiderActivity =
+    ns &&
+    (typeof ns.netPercentInsiderShares === 'number' ||
+      typeof ns.buyInfoCount === 'number' ||
+      typeof ns.sellInfoCount === 'number')
+      ? {
+          netPercent: pct(ns.netPercentInsiderShares),
+          buyCount: typeof ns.buyInfoCount === 'number' ? ns.buyInfoCount : null,
+          sellCount: typeof ns.sellInfoCount === 'number' ? ns.sellInfoCount : null,
+          period: typeof ns.period === 'string' ? ns.period : null,
+        }
+      : null;
 
   const gain52w = pickNum(
     (ks as { fiftyTwoWeekChange?: number; '52WeekChange'?: number }).fiftyTwoWeekChange,
@@ -224,14 +268,21 @@ export async function fetchStockMetrics(
     cons,
     marketCap: marketCapUsdB,
     revenueGrowthYoY: pct((fd as { revenueGrowth?: number }).revenueGrowth),
+    earningsGrowthYoY: pct((fd as { earningsGrowth?: number }).earningsGrowth),
     profitMargin: pct((fd as { profitMargins?: number }).profitMargins),
+    grossMargin: pct((fd as { grossMargins?: number }).grossMargins),
+    operatingMargin: pct((fd as { operatingMargins?: number }).operatingMargins),
     roe: pct((fd as { returnOnEquity?: number }).returnOnEquity),
+    roa: pct((fd as { returnOnAssets?: number }).returnOnAssets),
+    freeCashFlow: fcfUsdB,
+    evToEbitda: round((ks as { enterpriseToEbitda?: number }).enterpriseToEbitda ?? null),
     debtToEquity: ratioFromPct((fd as { debtToEquity?: number }).debtToEquity),
     peg: round(pickNum((ks as { pegRatio?: number }).pegRatio, (ks as { trailingPegRatio?: number }).trailingPegRatio)),
     targetHigh: round((fd as { targetHighPrice?: number }).targetHighPrice ?? null),
     targetLow: round((fd as { targetLowPrice?: number }).targetLowPrice ?? null),
     numAnalysts: (fd as { numberOfAnalystOpinions?: number }).numberOfAnalystOpinions ?? null,
     analystBreakdown: breakdown,
+    insiderActivity,
     sources: [{ url: `https://finance.yahoo.com/quote/${yahooSymbol}` }],
   };
 }

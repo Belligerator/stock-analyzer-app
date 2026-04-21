@@ -137,7 +137,16 @@ export const StockSnapshots: CollectionConfig = {
                 { name: 'peg', type: 'number', admin: { width: '25%' } },
                 { name: 'gain52w', type: 'number', admin: { width: '25%' } },
                 { name: 'marketCap', type: 'number', admin: { width: '25%' } },
+                { name: 'evToEbitda', type: 'number', admin: { width: '25%' } },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
                 { name: 'revenueGrowthYoY', type: 'number', admin: { width: '25%' } },
+                { name: 'earningsGrowthYoY', type: 'number', admin: { width: '25%' } },
+                { name: 'grossMargin', type: 'number', admin: { width: '25%' } },
+                { name: 'operatingMargin', type: 'number', admin: { width: '25%' } },
               ],
             },
             {
@@ -145,8 +154,15 @@ export const StockSnapshots: CollectionConfig = {
               fields: [
                 { name: 'profitMargin', type: 'number', admin: { width: '25%' } },
                 { name: 'roe', type: 'number', admin: { width: '25%' } },
-                { name: 'debtToEquity', type: 'number', admin: { width: '25%' } },
-                { name: 'numAnalysts', type: 'number', admin: { width: '25%' } },
+                { name: 'roa', type: 'number', admin: { width: '25%' } },
+                { name: 'freeCashFlow', type: 'number', admin: { width: '25%' } },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                { name: 'debtToEquity', type: 'number', admin: { width: '50%' } },
+                { name: 'numAnalysts', type: 'number', admin: { width: '50%' } },
               ],
             },
             {
@@ -170,6 +186,21 @@ export const StockSnapshots: CollectionConfig = {
                     { name: 'hold', type: 'number', admin: { width: '20%' } },
                     { name: 'sell', type: 'number', admin: { width: '20%' } },
                     { name: 'strongSell', type: 'number', admin: { width: '20%' } },
+                  ],
+                },
+              ],
+            },
+            {
+              name: 'insiderActivity',
+              type: 'group',
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'netPercent', type: 'number', admin: { width: '30%' } },
+                    { name: 'buyCount', type: 'number', admin: { width: '25%' } },
+                    { name: 'sellCount', type: 'number', admin: { width: '25%' } },
+                    { name: 'period', type: 'text', admin: { width: '20%' } },
                   ],
                 },
               ],

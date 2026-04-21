@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     const result = await yf.search(q, { quotesCount: 10, newsCount: 0 });
     const quotes: TickerSearchQuote[] = (result.quotes ?? [])
       .map((x) => x as Record<string, unknown>)
-      .filter((x): x is Record<string, unknown> & { symbol: string } => typeof x.symbol === 'string' && x.symbol.length > 0)
+      .filter(
+        (x): x is Record<string, unknown> & { symbol: string } => typeof x.symbol === 'string' && x.symbol.length > 0,
+      )
       .map((x) => ({
         symbol: x.symbol,
         shortname: typeof x.shortname === 'string' ? x.shortname : undefined,

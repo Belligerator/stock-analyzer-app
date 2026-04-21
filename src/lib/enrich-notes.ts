@@ -112,8 +112,16 @@ Vrať POUZE validní JSON array, bez markdown, bez komentáře:
 # Priority
 
 - **skip** — metriky stabilní, žádný material event, nic pozoruhodného
-- **normal** — jedna anomálie v metrikách (vysoké P/E, slabý růst, ...), minor news, rating change, upgrade/downgrade
-- **high** — major event: M&A (akvizice, spin-off), earnings beat/miss s material revize, lawsuit, CEO change, regulatory action, extreme metric kombo (2+ anomálie současně), recent 10-Q/10-K s významnou změnou metrik
+- **normal** — jedna anomálie v metrikách (vysoké P/E, slabý růst, klesající marže, ...), minor news, rating change, upgrade/downgrade
+- **high** — major event: M&A (akvizice, spin-off), earnings beat/miss s material revize, lawsuit, CEO change, regulatory action, extreme metric kombo (2+ anomálie současně), recent 10-Q/10-K s významnou změnou metrik, silná insider aktivita (net buying > 2 % nebo silný net selling), negativní FCF při vysoké valuaci
+
+# Interpretační pravidla (quality metrics)
+- EV/EBITDA > 25 nebo < 5 = extrém, worth attention (kombinace s jinou metrikou → high)
+- Klesající gross/operating margin YoY = včasný varovný signál (normal/high dle velikosti)
+- ROE >> ROA (rozdíl > 15 p.b.) = firma jede na leverage, kombinuj s D/E
+- Negativní FCF při zisku > 0 = účetní triky / agresivní CapEx; kombinuj s Revenue YoY pro kontext
+- Earnings YoY výrazně nižší než Revenue YoY = ztráta marže
+- Net insider buying > 2 % = bullish signál; selling samostatně slabý signál (může být daně/diversifikace)
 
 # Clickbait mitigation
 News headlines jsou často clickbait. NEROZHODUJ jen podle headline — kombinuj VŽDY s metrikami. Pokud headline říká něco dramatického ale metriky to nepotvrzují, je to spíš skip/normal než high. researchReports[].contentText (analyst report content) je důvěryhodnější než news titles.
@@ -123,7 +131,7 @@ Pokud researchReports.contentText nebo sigDevs zmiňují recent 10-Q/10-K/earnin
 
 # Dataset
 Každý ticker má:
-- metrics (ticker, name, sector, cena, P/E, fwd P/E, gain52w, market cap, revenue growth, margin, ROE, D/E, PEG, target, cons rating)
+- metrics: valuace (P/E, Fwd P/E, PEG, EV/EBITDA, market cap, D/E), růst (gain52w, revenue YoY, earnings YoY), kvalita (gross/operating/profit margin, ROE, ROA, free cash flow), analytici (target, cons), insideři (net purchase activity)
 - recentContext: { news[], sigDevs[], researchReports[] s contentText, upgrades[], recommendation, nextEarnings }`;
 
 const ANALYSIS_SYSTEM_PROMPT = `Jsi finanční analytik. Dostaneš metriky + recent context jedné akcie a důvod proč byla flagnuta. Napiš kvalitativní poznámku v češtině (3–5 vět) se zdrojem + datumem u každého faktu, a na konci signál pro testovací účely.
@@ -217,11 +225,17 @@ function buildTriagePayload(
           price: viewModel.price,
           pe: viewModel.pe,
           fwdPe: viewModel.fwdPe,
+          evToEbitda: viewModel.evToEbitda,
           gain52w: viewModel.gain52w,
           marketCap: viewModel.marketCap,
           revenueGrowthYoY: viewModel.revenueGrowthYoY,
+          earningsGrowthYoY: viewModel.earningsGrowthYoY,
+          grossMargin: viewModel.grossMargin,
+          operatingMargin: viewModel.operatingMargin,
           profitMargin: viewModel.profitMargin,
           roe: viewModel.roe,
+          roa: viewModel.roa,
+          freeCashFlowUsdB: viewModel.freeCashFlow,
           debtToEquity: viewModel.debtToEquity,
           peg: viewModel.peg,
           avgTarget: viewModel.avgTarget,
@@ -229,6 +243,7 @@ function buildTriagePayload(
           targetLow: viewModel.targetLow,
           cons: viewModel.cons,
           numAnalysts: viewModel.numAnalysts,
+          insiderActivity: viewModel.insiderActivity,
         },
         recentContext,
       })),
@@ -319,11 +334,17 @@ function buildAnalysisUserMessage(
         price: stock.price,
         pe: stock.pe,
         fwdPe: stock.fwdPe,
+        evToEbitda: stock.evToEbitda,
         gain52w: stock.gain52w,
         marketCap: stock.marketCap,
         revenueGrowthYoY: stock.revenueGrowthYoY,
+        earningsGrowthYoY: stock.earningsGrowthYoY,
+        grossMargin: stock.grossMargin,
+        operatingMargin: stock.operatingMargin,
         profitMargin: stock.profitMargin,
         roe: stock.roe,
+        roa: stock.roa,
+        freeCashFlowUsdB: stock.freeCashFlow,
         debtToEquity: stock.debtToEquity,
         peg: stock.peg,
         avgTarget: stock.avgTarget,
@@ -331,6 +352,7 @@ function buildAnalysisUserMessage(
         targetLow: stock.targetLow,
         cons: stock.cons,
         numAnalysts: stock.numAnalysts,
+        insiderActivity: stock.insiderActivity,
       },
       recentContext,
       trigger: { priority: trigger.priority, reason: trigger.reason },

@@ -130,19 +130,51 @@
 
 .tipPopup {
   position: fixed;
-  width: 240px;
+  width: 300px;
   max-width: calc(100vw - 16px);
   z-index: 10000;
   background: #131e2e;
   border: 1px solid #2a3a4a;
   border-radius: 4px;
-  padding: 10px;
+  padding: 10px 12px;
   font-size: 11px;
   color: #b8c5d6;
   line-height: 1.55;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
   white-space: normal;
   text-align: left;
+}
+
+.tipExample {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 2px solid #3b82f6;
+  border-radius: 0 3px 3px 0;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.tipExampleLabel {
+  color: #60a5fa;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.tipNote {
+  margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.tipNoteLabel {
+  color: #f59e0b;
+  font-style: normal;
+  font-weight: 600;
+  margin-right: 4px;
 }
 
 .tipScale {
@@ -244,6 +276,59 @@
   background: #e8edf3;
   border: 2px solid #0c1017;
   box-shadow: 0 0 0 1px #778899;
+}
+
+/* Insider activity */
+.insiderWrap {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid #1c2533;
+  border-radius: 4px;
+}
+
+.insiderMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 90px;
+}
+
+.insiderValue {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.insiderCaption {
+  font-size: 10px;
+  color: #778899;
+}
+
+.insiderBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #b8c5d6;
+  flex: 1;
+  justify-content: center;
+}
+
+.insiderBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.insiderBreakdownKey {
+  color: #778899;
+}
+
+.insiderBreakdownVal {
+  color: #e8edf3;
+  font-weight: 600;
 }
 
 /* Note section */

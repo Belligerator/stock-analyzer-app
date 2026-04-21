@@ -105,15 +105,81 @@ function colorUpside(v: number | null): string | undefined {
   return BAD;
 }
 
+function colorEvEbitda(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v < 10) return GOOD;
+  if (v < 15) return undefined;
+  if (v < 25) return WARN;
+  return BAD;
+}
+
+function colorGrossMargin(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v >= 50) return GOOD;
+  if (v >= 30) return undefined;
+  if (v >= 10) return WARN;
+  return BAD;
+}
+
+function colorOperatingMargin(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v >= 20) return GOOD;
+  if (v >= 10) return undefined;
+  if (v >= 0) return WARN;
+  return BAD;
+}
+
+function colorRoa(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v >= 10) return GOOD;
+  if (v >= 5) return undefined;
+  if (v >= 0) return WARN;
+  return BAD;
+}
+
+function colorEarningsGrowth(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v >= 20) return GOOD;
+  if (v >= 0) return undefined;
+  if (v >= -20) return WARN;
+  return BAD;
+}
+
+function colorFcf(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v > 0) return GOOD;
+  if (v === 0) return WARN;
+  return BAD;
+}
+
+function colorInsiderNet(v: number | null | undefined): string | undefined {
+  if (v == null) return undefined;
+  if (v > 0.5) return GOOD;
+  if (v >= -0.5) return undefined;
+  if (v >= -2) return WARN;
+  return BAD;
+}
+
 const NEUTRAL = '#e8edf3';
 
 type ScaleItem = { color: string; label: string };
-type TooltipData = { text: string; scale?: ScaleItem[] };
+type TooltipData = {
+  text: string;
+  example?: string;
+  note?: string;
+  scale?: ScaleItem[];
+};
 
 const TOOLTIPS: Record<string, TooltipData> = {
-  price: { text: 'Aktuální tržní cena akcie.' },
+  price: {
+    text: 'Aktuální tržní cena jedné akcie v měně, ve které se obchoduje.',
+    note: 'Data aktualizuje noční cron — během dne může zaostávat za live trhem.',
+  },
   pe: {
-    text: 'Poměr ceny k zisku za posledních 12 měsíců (TTM). Říká, kolik platíš za 1 dolar zisku. Nižší = levnější, ale může značit problémy.',
+    text: 'Price-to-Earnings (TTM) — cena akcie dělená ziskem na akcii za posledních 12 měsíců. Říká, kolik dolarů platíš za 1 dolar aktuálního zisku firmy.',
+    example:
+      'P/E 20 znamená, že platíš $20 za $1 ročního zisku. Při neměnném zisku by se ti investice vrátila za 20 let.',
+    note: 'Nízké P/E nemusí znamenat levno — trh možná čeká pokles zisku. Pod 10 bývá tzv. „value trap" (hodnotová past).',
     scale: [
       { color: GOOD, label: '< 15 levné' },
       { color: NEUTRAL, label: '15–30 fér' },
@@ -122,7 +188,10 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   fwdPe: {
-    text: 'P/E počítané z odhadovaného zisku v příštích 12 měsících. Lépe odráží budoucí valuaci než historické P/E.',
+    text: 'Forward P/E — P/E založené na odhadovaném zisku v příštích 12 měsících (konsenzus analytiků). Ukazuje, za kolik kupuješ budoucí ziskovost, ne minulou.',
+    example:
+      'Firma s cenou $100 a očekávaným EPS $5 má Fwd P/E = 20. Pokud roste, Fwd P/E bude obvykle nižší než TTM P/E.',
+    note: 'Odhady analytiků se mění — číslo není tak pevné jako TTM P/E.',
     scale: [
       { color: GOOD, label: '< 20 levné' },
       { color: NEUTRAL, label: '20–30 fér' },
@@ -130,9 +199,24 @@ const TOOLTIPS: Record<string, TooltipData> = {
       { color: BAD, label: '> 40 velmi drahé' },
     ],
   },
-  marketCap: { text: 'Celková tržní hodnota firmy = cena × počet akcií. Zobrazeno v miliardách USD.' },
+  marketCap: {
+    text: 'Market Capitalization — aktuální cena × počet akcií v oběhu. Celková tržní hodnota firmy jako celku. Zobrazeno v miliardách USD.',
+    example: 'Apple s cenou $200 a ~15 mld. akcií má market cap ~$3 000 B (3 biliony USD).',
+  },
+  evEbitda: {
+    text: 'Enterprise Value / EBITDA. EV = market cap + dluh − hotovost (kolik by tě stálo koupit celou firmu včetně dluhů). EBITDA = zisk před úroky, daněmi a odpisy.',
+    example: 'EV/EBITDA 10 = firmu koupíš za 10× její roční provozní zisk. Mediáh S&P 500 je historicky 12–14.',
+    note: 'Lepší než P/E pro srovnání firem s různou kapitálovou strukturou — na rozdíl od P/E neignoruje dluh a hotovost.',
+    scale: [
+      { color: GOOD, label: '< 10 levné' },
+      { color: NEUTRAL, label: '10–15 fér' },
+      { color: WARN, label: '15–25 drahé' },
+      { color: BAD, label: '> 25 velmi drahé' },
+    ],
+  },
   peg: {
-    text: 'P/E dělené očekávaným ročním růstem zisku. Bere v potaz růst. PEG < 1 = potenciálně podhodnoceno.',
+    text: 'P/E poměr dělený očekávaným ročním růstem zisku v %. Zohledňuje růst — rostoucí firma s vyšším P/E může být fér, stagnující firma s nízkým P/E naopak drahá.',
+    example: 'P/E 30 / EPS růst 30 % = PEG 1,0 (fér). P/E 30 / růst 5 % = PEG 6,0 (drahé vzhledem k růstu).',
     scale: [
       { color: GOOD, label: '< 1 podhodnoceno' },
       { color: NEUTRAL, label: '1–2 fér' },
@@ -141,7 +225,10 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   de: {
-    text: 'Dluh dělený vlastním kapitálem. Kolik dluhu firma nese na 1 dolar vlastního kapitálu. Nad 2 = výrazné zadlužení.',
+    text: 'Debt-to-Equity — celkový dluh firmy dělený vlastním kapitálem. Kolik má firma dluhu na každý 1 dolar kapitálu akcionářů.',
+    example:
+      'D/E 0,5 = na každý $1 kapitálu dluh 50¢. D/E 2,0 = dluh dvakrát větší než kapitál (zvýšené riziko při růstu úroků).',
+    note: 'U bank a utilities je vyšší D/E běžný, u tech firem neobvyklý. Srovnávej v rámci sektoru.',
     scale: [
       { color: GOOD, label: '< 0,5 nízký dluh' },
       { color: NEUTRAL, label: '0,5–1,5 v pořádku' },
@@ -150,7 +237,9 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   gain52w: {
-    text: 'Procentuální změna ceny akcie za posledních 52 týdnů (1 rok). Kladné číslo = akcie za rok zdražila.',
+    text: 'Procentní změna ceny akcie za posledních 52 týdnů (roční price performance).',
+    example:
+      'Benchmark: S&P 500 dělá historicky +8–12 % ročně. +30 % = výrazně nadprůměrně. −15 % = velký underperformer oproti trhu.',
     scale: [
       { color: GOOD, label: '≥ +20 % silný růst' },
       { color: NEUTRAL, label: '0 až +20 %' },
@@ -159,7 +248,9 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   revenueYoY: {
-    text: 'Meziroční změna tržeb (příjmů firmy). Kladné = firma roste, záporné = tržby klesají.',
+    text: 'Year-over-Year růst tržeb — procentní změna příjmů oproti stejnému období před rokem. Hlavní indikátor, že byznys škáluje.',
+    example: 'Revenue YoY +25 %: loni firma v dané periodě udělala $4 B, letos $5 B.',
+    note: 'Samotný růst tržeb nestačí — kombinuj s ziskovostí (Earnings YoY, marže). Tržby rostou snadno levnějšími produkty, zisk tak snadno ne.',
     scale: [
       { color: GOOD, label: '≥ +15 % rychlý růst' },
       { color: NEUTRAL, label: '0 až +15 %' },
@@ -167,8 +258,44 @@ const TOOLTIPS: Record<string, TooltipData> = {
       { color: BAD, label: '< −10 % výrazný pokles' },
     ],
   },
+  earningsYoY: {
+    text: 'Year-over-Year růst čistého zisku. Doplňuje Revenue YoY — ukazuje, jestli růst tržeb skutečně vede k růstu zisku, nebo se rozpouští v rostoucích nákladech.',
+    example:
+      'Revenue +20 % a Earnings +5 % = firma ztrácí marži. Revenue +20 % a Earnings +30 % = operating leverage pracuje (zisk roste rychleji než tržby).',
+    note: 'Earnings YoY je volatilnější než Revenue YoY — jeden velký jednorázový náklad dokáže číslo výrazně rozhodit.',
+    scale: [
+      { color: GOOD, label: '≥ +20 % silný růst zisku' },
+      { color: NEUTRAL, label: '0 až +20 %' },
+      { color: WARN, label: '−20 až 0 % pokles' },
+      { color: BAD, label: '< −20 % výrazný pokles' },
+    ],
+  },
+  grossMargin: {
+    text: 'Gross Margin = (tržby − přímé náklady na produkt) / tržby. Kolik % z tržeb zbyde po odečtení výrobních/pořizovacích nákladů. Hlavní měřítko cenové síly a „moatu".',
+    example:
+      'Software: Microsoft ~70 %, Apple ~45 %. Retail: Walmart ~24 %, Costco ~12 % (nízká marže, vysoký obrat). Stabilně vysoká gross margin = firma si může účtovat svou cenu.',
+    note: 'Klesající gross margin je včasný varovný signál — projeví se dřív než pokles čistého zisku.',
+    scale: [
+      { color: GOOD, label: '≥ 50 % silná cenová síla' },
+      { color: NEUTRAL, label: '30–50 % slušná' },
+      { color: WARN, label: '10–30 % slabá' },
+      { color: BAD, label: '< 10 % kritická' },
+    ],
+  },
+  operatingMargin: {
+    text: 'Operating Margin — (tržby − COGS − provozní náklady) / tržby. Po COGS i mzdách, marketingu, R&D, ale před úroky a daněmi. Měří efektivitu samotného byznysu, bez vlivu financování.',
+    example: 'Apple ~30 %, Google ~27 %, Walmart ~4 %. Konzistentně vysoká = dobrá disciplína nákladů.',
+    scale: [
+      { color: GOOD, label: '≥ 20 % výborná' },
+      { color: NEUTRAL, label: '10–20 % slušná' },
+      { color: WARN, label: '0–10 % slabá' },
+      { color: BAD, label: '< 0 % provozní ztráta' },
+    ],
+  },
   profitMargin: {
-    text: 'Čistý zisk jako procento tržeb. Kolik centů zisku zbyde z každého dolaru příjmu. Vyšší = efektivnější firma.',
+    text: 'Net Profit Margin — čistý zisk (po všech nákladech, úrocích i daních) jako % tržeb. Kolik centů zisku zbyde z každého dolaru příjmu pro akcionáře.',
+    example: 'Tržby $100, všechny náklady $85, daně $3 → zisk $12 → profit margin 12 %.',
+    note: 'Srovnávej jen v rámci sektoru. Software typicky 20–30 %, retail 2–5 %, banky 20–30 %.',
     scale: [
       { color: GOOD, label: '≥ 20 % výborná' },
       { color: NEUTRAL, label: '10–20 % slušná' },
@@ -177,7 +304,9 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   roe: {
-    text: 'Výnosnost vlastního kapitálu. Kolik čistého zisku firma generuje na 1 dolar kapitálu akcionářů. Vyšší = lepší.',
+    text: 'Return on Equity — čistý zisk / vlastní kapitál akcionářů. Kolik zisku firma vytvoří za rok z $1 peněz vložených akcionáři.',
+    example: 'Kapitál $10 B, zisk $2 B → ROE 20 % (velmi silné číslo).',
+    note: 'Pozor: firma může zvednout ROE zadlužením (místo navýšení kapitálu si půjčí). Proto vždy sleduj souběžně ROA — pokud je velký rozdíl, ROE roste dluhem, ne kvalitou byznysu.',
     scale: [
       { color: GOOD, label: '≥ 20 % výborná' },
       { color: NEUTRAL, label: '10–20 % slušná' },
@@ -185,9 +314,35 @@ const TOOLTIPS: Record<string, TooltipData> = {
       { color: BAD, label: '< 0 % ztráta' },
     ],
   },
-  avgTarget: { text: 'Průměrný (mediánový) cílový kurz akcie podle analytiků Wall Street na příštích 12 měsíců.' },
+  roa: {
+    text: 'Return on Assets — čistý zisk / celková aktiva. Kolik zisku firma vymáčkne z každého $1 aktiv (budovy, zásoby, stroje, IT). Párová metrika k ROE.',
+    example: 'ROA 10 % = z $1 B aktiv firma vytváří $100 M ročního zisku. Banky mají typicky 1–2 %, software 15–25 %.',
+    note: 'Pokud ROE výrazně převyšuje ROA (rozdíl > 15 p.b.), firma jede na vysokém leverage (dluh). Kvalitní firma má vysoké OBA — nízká potřeba aktiv i nízká potřeba dluhu.',
+    scale: [
+      { color: GOOD, label: '≥ 10 % výborná' },
+      { color: NEUTRAL, label: '5–10 % slušná' },
+      { color: WARN, label: '0–5 % slabá' },
+      { color: BAD, label: '< 0 % ztráta' },
+    ],
+  },
+  freeCashFlow: {
+    text: 'Free Cash Flow — hotovost, která firmě zbyde po zaplacení provozu i kapitálových výdajů (CapEx). Skutečné peníze, které může použít na dividendy, buybacky, akvizice nebo splácení dluhu.',
+    example:
+      'FCF $5 B = firma ročně vygeneruje $5 miliard volné hotovosti. Záporný FCF = firma pálí peníze (typické u startup-fáze nebo při masivních investicích).',
+    note: 'Nejtěžší metrika k účetnímu falšování. Pokud se FCF výrazně rozchází s účetním ziskem, zpozorni — účetní triky obvykle selhávají tady.',
+    scale: [
+      { color: GOOD, label: '> 0 firma generuje hotovost' },
+      { color: WARN, label: '≈ 0 balancuje' },
+      { color: BAD, label: '< 0 pálí peníze' },
+    ],
+  },
+  avgTarget: {
+    text: 'Medián cílových kurzů všech analytiků Wall Street, kteří akcii pokrývají. Cena, kterou v průměru čekají za 12 měsíců.',
+    note: 'Analytici mají tendenci být optimističtí — zvlášť ti z bank, které firmu zároveň upisují nebo jí radí (potenciální konflikt zájmů).',
+  },
   upside: {
-    text: 'Potenciál růstu od aktuální ceny k cílovému kurzu analytiků. Kladné = analytici čekají zdražení.',
+    text: '(Avg Target − aktuální cena) / aktuální cena. Kolik % má akcie „dohnat" k průměrnému 12M cíli analytiků.',
+    example: 'Cena $100, target $120 → upside 20 %. Analytici čekají růst o 20 % do roka.',
     scale: [
       { color: GOOD, label: '≥ +15 % velký prostor' },
       { color: NEUTRAL, label: '0 až +15 %' },
@@ -196,22 +351,41 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   numAnalysts: {
-    text: 'Počet analytiků Wall Street, kteří aktivně sledují a hodnotí tuto akcii.',
+    text: 'Počet analytiků, kteří akcii aktivně pokrývají. Víc analytiků = robustnější konsenzus a menší riziko, že jeden ojedinělý názor zkreslí průměr.',
+    example:
+      'Mega-cap jako NVDA typicky 40+. Mid-caps 10–20. Mikrokapy často 0–3 (= málo spolehlivá konsenzuální data).',
     scale: [
       { color: GOOD, label: '≥ 15 široké pokrytí' },
       { color: NEUTRAL, label: '5–15 průměrné' },
       { color: WARN, label: '< 5 málo dat' },
     ],
   },
-  targetLow: { text: 'Nejnižší cílový kurz ze všech analytiků. Představuje pesimistický scénář.' },
-  targetHigh: { text: 'Nejvyšší cílový kurz ze všech analytiků. Představuje optimistický scénář.' },
+  targetLow: {
+    text: 'Nejnižší cílový kurz ze všech analytiků — pesimistický scénář (názor nejvíc bearish analytika).',
+  },
+  targetHigh: {
+    text: 'Nejvyšší cílový kurz ze všech analytiků — optimistický scénář (názor nejvíc bullish analytika).',
+  },
   targetRange: {
-    text: 'Poměr Target High / Target Low. Čím vyšší, tím větší neshoda mezi analytiky — větší nejistota ohledně vývoje akcie.',
+    text: 'Poměr Target High / Target Low. Měří, jak moc se analytici shodnou. Malé rozpětí = konsenzus, velké = velká nejistota ohledně budoucnosti firmy.',
+    example: 'High $120, Low $100 → 1,2× (shoda). High $200, Low $50 → 4× (obří neshoda, spekulativní akcie).',
     scale: [
       { color: GOOD, label: '< 1,5× shoda' },
       { color: NEUTRAL, label: '1,5–2× mírná neshoda' },
       { color: WARN, label: '2–3× velká neshoda' },
       { color: BAD, label: '> 3× extrémní nejistota' },
+    ],
+  },
+  insiderNet: {
+    text: 'Net Insider Purchase Activity — čisté nákupy insiderů (CEO, CFO, board, významní akcionáři) za posledních ~6 měsíců jako % jejich celkového podílu. Kladné = insideři víc nakupovali než prodávali.',
+    example:
+      '+1,5 % = insideři čistě přikoupili 1,5 % svých akcií (bullish „skin in the game"). −2 % = čistě prodali 2 %.',
+    note: 'Prodej sám o sobě má slabší signál — může jít o diverzifikaci, daně nebo vesting opcí. Nejsilnější bullish je naopak koncentrovaný nákup CEO/CFO přímo na otevřeném trhu.',
+    scale: [
+      { color: GOOD, label: '> +0,5 % insideři nakupují' },
+      { color: NEUTRAL, label: '±0,5 % neutrál' },
+      { color: WARN, label: '−2 až −0,5 % mírný prodej' },
+      { color: BAD, label: '< −2 % silný prodej' },
     ],
   },
 };
@@ -260,9 +434,15 @@ function TooltipIcon({ id }: { id: string }) {
 
   if (!data) return null;
 
-  const TIP_W = 240;
+  const TIP_W = 300;
   const MARGIN = 8;
-  const TIP_H_ESTIMATE = data.scale ? 200 : 110;
+  const textLines = Math.ceil(data.text.length / 50);
+  const TIP_H_ESTIMATE =
+    24 +
+    textLines * 18 +
+    (data.example ? Math.ceil(data.example.length / 48) * 18 + 20 : 0) +
+    (data.note ? Math.ceil(data.note.length / 52) * 16 + 12 : 0) +
+    (data.scale ? 16 + data.scale.length * 18 : 0);
   let tipLeft = 0;
   let tipTop = 0;
   if (anchor && typeof window !== 'undefined') {
@@ -294,6 +474,18 @@ function TooltipIcon({ id }: { id: string }) {
         createPortal(
           <div ref={tipRef} className={s.tipPopup} style={{ left: tipLeft, top: tipTop }}>
             <div>{data.text}</div>
+            {data.example && (
+              <div className={s.tipExample}>
+                <span className={s.tipExampleLabel}>Příklad:</span>
+                {data.example}
+              </div>
+            )}
+            {data.note && (
+              <div className={s.tipNote}>
+                <span className={s.tipNoteLabel}>Pozor:</span>
+                {data.note}
+              </div>
+            )}
             {data.scale && (
               <div className={s.tipScale}>
                 {data.scale.map((item) => (
@@ -345,6 +537,14 @@ function formatRatio(v: number | null | undefined): string {
   return v == null ? '—' : v.toFixed(2);
 }
 
+function formatFcf(v: number | null | undefined): string {
+  if (v == null) return '—';
+  const sign = v >= 0 ? '' : '-';
+  const abs = Math.abs(v);
+  if (abs >= 1000) return `${sign}$${(abs / 1000).toFixed(2)}T`;
+  return `${sign}$${abs.toFixed(2)}B`;
+}
+
 function ratingBadge(cons: Stock['cons']): React.CSSProperties {
   if (cons === 'Strong Buy')
     return { background: 'rgba(34,197,94,.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,.3)' };
@@ -362,6 +562,41 @@ const RATING_COLORS = {
   sell: '#f87171',
   strongSell: '#ef4444',
 };
+
+function InsiderActivity({ ia }: { ia: NonNullable<Stock['insiderActivity']> }) {
+  const net = ia.netPercent;
+  const buy = ia.buyCount ?? 0;
+  const sell = ia.sellCount ?? 0;
+  const period = ia.period ?? '6m';
+
+  if (net == null && buy === 0 && sell === 0) return null;
+
+  const color = colorInsiderNet(net);
+  const displayNet = net == null ? '—' : formatPct(net);
+  const caption =
+    net == null ? '' : net > 0 ? 'Čisté nákupy insiderů' : net < 0 ? 'Čisté prodeje insiderů' : 'Neutrální';
+
+  return (
+    <div className={s.insiderWrap}>
+      <div className={s.insiderMain}>
+        <div className={s.insiderValue} style={color ? { color } : undefined}>
+          {displayNet}
+        </div>
+        <div className={s.insiderCaption}>{caption}</div>
+      </div>
+      <div className={s.insiderBreakdown}>
+        <div className={s.insiderBreakdownRow}>
+          <span className={s.insiderBreakdownKey}>Nákupů ({period})</span>
+          <span className={s.insiderBreakdownVal}>{buy}</span>
+        </div>
+        <div className={s.insiderBreakdownRow}>
+          <span className={s.insiderBreakdownKey}>Prodejů ({period})</span>
+          <span className={s.insiderBreakdownVal}>{sell}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AnalystBreakdown({ bd }: { bd: NonNullable<Stock['analystBreakdown']> }) {
   const total = bd.strongBuy + bd.buy + bd.hold + bd.sell + bd.strongSell;
@@ -476,6 +711,12 @@ export function StockModal({ stock, onClose }: StockModalProps) {
           <Metric label="P/E (TTM)" value={formatPe(stock.pe)} tooltipId="pe" color={colorPe(stock.pe)} />
           <Metric label="Fwd P/E" value={formatPe(stock.fwdPe)} tooltipId="fwdPe" color={colorFwdPe(stock.fwdPe)} />
           <Metric label="Market Cap" value={formatMarketCap(stock.marketCap)} tooltipId="marketCap" />
+          <Metric
+            label="EV / EBITDA"
+            value={formatRatio(stock.evToEbitda)}
+            tooltipId="evEbitda"
+            color={colorEvEbitda(stock.evToEbitda)}
+          />
           <Metric label="PEG" value={formatRatio(stock.peg)} tooltipId="peg" color={colorPeg(stock.peg)} />
           <Metric
             label="D/E"
@@ -485,8 +726,8 @@ export function StockModal({ stock, onClose }: StockModalProps) {
           />
         </div>
 
-        {/* Výkonnost */}
-        <div className={s.sectionTitle}>Výkonnost</div>
+        {/* Růst */}
+        <div className={s.sectionTitle}>Růst</div>
         <div className={s.grid3}>
           <Metric
             label="52W"
@@ -501,12 +742,42 @@ export function StockModal({ stock, onClose }: StockModalProps) {
             tooltipId="revenueYoY"
           />
           <Metric
+            label="Earnings YoY"
+            value={formatPct(stock.earningsGrowthYoY ?? null)}
+            color={colorEarningsGrowth(stock.earningsGrowthYoY)}
+            tooltipId="earningsYoY"
+          />
+        </div>
+
+        {/* Ziskovost a kvalita */}
+        <div className={s.sectionTitle}>Ziskovost a kvalita</div>
+        <div className={s.grid3}>
+          <Metric
+            label="Gross Margin"
+            value={formatPct(stock.grossMargin ?? null)}
+            color={colorGrossMargin(stock.grossMargin)}
+            tooltipId="grossMargin"
+          />
+          <Metric
+            label="Operating Margin"
+            value={formatPct(stock.operatingMargin ?? null)}
+            color={colorOperatingMargin(stock.operatingMargin)}
+            tooltipId="operatingMargin"
+          />
+          <Metric
             label="Profit Margin"
             value={formatPct(stock.profitMargin ?? null)}
             color={colorMargin(stock.profitMargin)}
             tooltipId="profitMargin"
           />
           <Metric label="ROE" value={formatPct(stock.roe ?? null)} color={colorRoe(stock.roe)} tooltipId="roe" />
+          <Metric label="ROA" value={formatPct(stock.roa ?? null)} color={colorRoa(stock.roa)} tooltipId="roa" />
+          <Metric
+            label="Free Cash Flow"
+            value={formatFcf(stock.freeCashFlow)}
+            color={colorFcf(stock.freeCashFlow)}
+            tooltipId="freeCashFlow"
+          />
         </div>
 
         {/* Analytici */}
@@ -556,6 +827,16 @@ export function StockModal({ stock, onClose }: StockModalProps) {
           revisions={stock.epsRevisions}
           trend={stock.recommendationTrend}
         />
+
+        {/* Insideři */}
+        {stock.insiderActivity && (
+          <>
+            <div className={s.sectionTitle}>
+              Insideři <TooltipIcon id="insiderNet" />
+            </div>
+            <InsiderActivity ia={stock.insiderActivity} />
+          </>
+        )}
 
         {/* Poznámka */}
         {stock.note && (

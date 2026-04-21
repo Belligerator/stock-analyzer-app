@@ -32,11 +32,14 @@ function log(label: string, data?: unknown): void {
   }
 }
 
-function withTiming<T>(label: string, fn: () => Promise<T>): Promise<{ ok: true; ms: number; value: T } | { ok: false; ms: number; error: string }> {
+function withTiming<T>(
+  label: string,
+  fn: () => Promise<T>,
+): Promise<{ ok: true; ms: number; value: T } | { ok: false; ms: number; error: string }> {
   const t = Date.now();
   log(`▶ ${label} start`);
   return fn()
-    .then(value => {
+    .then((value) => {
       const ms = Date.now() - t;
       log(`✓ ${label} done ${ms}ms`);
       return { ok: true as const, ms, value };
@@ -87,16 +90,22 @@ async function main(): Promise<void> {
   console.log('');
 
   // 2) QuoteSummary — used by refresh-stocks for metrics
-  const summary = await withTiming(`quoteSummary(${symbol}) modules=[price,summaryDetail,financialData,defaultKeyStatistics,assetProfile]`, () =>
-    yf.quoteSummary(symbol, {
-      modules: ['price', 'summaryDetail', 'financialData', 'defaultKeyStatistics', 'assetProfile'],
-    }),
+  const summary = await withTiming(
+    `quoteSummary(${symbol}) modules=[price,summaryDetail,financialData,defaultKeyStatistics,assetProfile]`,
+    () =>
+      yf.quoteSummary(symbol, {
+        modules: ['price', 'summaryDetail', 'financialData', 'defaultKeyStatistics', 'assetProfile'],
+      }),
   );
   if (summary.ok) {
     const s = summary.value;
     const price = (s.price ?? {}) as { regularMarketPrice?: number; longName?: string };
     const sd = (s.summaryDetail ?? {}) as { trailingPE?: number; forwardPE?: number; marketCap?: number };
-    const fd = (s.financialData ?? {}) as { targetMedianPrice?: number; recommendationKey?: string; numberOfAnalystOpinions?: number };
+    const fd = (s.financialData ?? {}) as {
+      targetMedianPrice?: number;
+      recommendationKey?: string;
+      numberOfAnalystOpinions?: number;
+    };
     const ap = (s.assetProfile ?? {}) as { sector?: string; industry?: string };
     log('  longName', price.longName);
     log('  regularMarketPrice', price.regularMarketPrice);
@@ -153,7 +162,7 @@ async function main(): Promise<void> {
 
   // Verdict
   const results = [quote, summary, search, hist, insights];
-  const okCount = results.filter(r => r.ok).length;
+  const okCount = results.filter((r) => r.ok).length;
   const failCount = results.length - okCount;
   log(`=== Result: ${okCount}/${results.length} calls OK, ${failCount} failed ===`);
   if (failCount === 0) {
@@ -168,7 +177,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Fatal:', err);
   process.exit(2);
 });

@@ -17,9 +17,15 @@ type SnapshotDoc = {
   peg?: number;
   gain52w?: number;
   marketCap?: number;
+  evToEbitda?: number;
   revenueGrowthYoY?: number;
+  earningsGrowthYoY?: number;
+  grossMargin?: number;
+  operatingMargin?: number;
   profitMargin?: number;
   roe?: number;
+  roa?: number;
+  freeCashFlow?: number;
   debtToEquity?: number;
   avgTarget?: number;
   targetHigh?: number;
@@ -32,6 +38,12 @@ type SnapshotDoc = {
     hold?: number;
     sell?: number;
     strongSell?: number;
+  };
+  insiderActivity?: {
+    netPercent?: number;
+    buyCount?: number;
+    sellCount?: number;
+    period?: string;
   };
   sources?: Array<{ url?: string }>;
   note?: string;
@@ -51,7 +63,7 @@ const CURRENCY_SYMBOL: Record<string, string> = { USD: '$', EUR: '€' };
 
 function fmtMoney(v: number | undefined, currency?: string): string {
   if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
-  const sym = currency ? CURRENCY_SYMBOL[currency] ?? '' : '';
+  const sym = currency ? (CURRENCY_SYMBOL[currency] ?? '') : '';
   return `${sym}${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 }
 
@@ -123,9 +135,7 @@ export function SnapshotCompareClient() {
       try {
         const url = new URL(window.location.href);
         const tickerParam = url.searchParams.get('ticker');
-        const json = await fetchJSON<ListResponse<SnapshotDoc>>(
-          '/api/stock-snapshots?limit=500&sort=-takenAt&depth=0',
-        );
+        const json = await fetchJSON<ListResponse<SnapshotDoc>>('/api/stock-snapshots?limit=500&sort=-takenAt&depth=0');
         setSnapshots(json.docs);
         const uniq = Array.from(new Set(json.docs.map((d) => d.ticker))).sort();
         setTickers(uniq);
@@ -165,14 +175,10 @@ export function SnapshotCompareClient() {
       const jobs: Promise<void>[] = [];
 
       if (selA.snapshotId && selA.snapshotId !== 'current') {
-        jobs.push(
-          fetchJSON<SnapshotDoc>(`/api/stock-snapshots/${selA.snapshotId}?depth=0`).then((d) => setDocA(d)),
-        );
+        jobs.push(fetchJSON<SnapshotDoc>(`/api/stock-snapshots/${selA.snapshotId}?depth=0`).then((d) => setDocA(d)));
       }
       if (selB.snapshotId && selB.snapshotId !== 'current') {
-        jobs.push(
-          fetchJSON<SnapshotDoc>(`/api/stock-snapshots/${selB.snapshotId}?depth=0`).then((d) => setDocB(d)),
-        );
+        jobs.push(fetchJSON<SnapshotDoc>(`/api/stock-snapshots/${selB.snapshotId}?depth=0`).then((d) => setDocB(d)));
       }
       // Always load the stock for header (name/sector) + current data when needed.
       jobs.push(
@@ -205,9 +211,7 @@ export function SnapshotCompareClient() {
     <div className={s.page}>
       <header className={s.header}>
         <h1 className={s.title}>Snapshot compare</h1>
-        <p className={s.subtitle}>
-          Porovnej dva snapshoty téhož tickeru, nebo snapshot vs aktuální stav akcie.
-        </p>
+        <p className={s.subtitle}>Porovnej dva snapshoty téhož tickeru, nebo snapshot vs aktuální stav akcie.</p>
       </header>
 
       <section className={s.controls}>
@@ -269,14 +273,10 @@ export function SnapshotCompareClient() {
       {error && <div className={s.error}>Chyba: {error}</div>}
       {loading && <div className={s.loading}>Načítám…</div>}
 
-      {resolvedA && resolvedB && !loading && (
-        <ComparisonView a={resolvedA} b={resolvedB} stock={stock} />
-      )}
+      {resolvedA && resolvedB && !loading && <ComparisonView a={resolvedA} b={resolvedB} stock={stock} />}
 
       {!loading && !resolvedA && tickerSnapshots.length === 0 && ticker && (
-        <div className={s.empty}>
-          Žádné snapshoty pro {ticker}. Vytvoř jeden ze stránky akcie.
-        </div>
+        <div className={s.empty}>Žádné snapshoty pro {ticker}. Vytvoř jeden ze stránky akcie.</div>
       )}
     </div>
   );
@@ -299,9 +299,15 @@ function stockToSnapshotLike(stock: StockDoc | null): SnapshotDoc | null {
     peg: stock.peg,
     gain52w: stock.gain52w,
     marketCap: stock.marketCap,
+    evToEbitda: stock.evToEbitda,
     revenueGrowthYoY: stock.revenueGrowthYoY,
+    earningsGrowthYoY: stock.earningsGrowthYoY,
+    grossMargin: stock.grossMargin,
+    operatingMargin: stock.operatingMargin,
     profitMargin: stock.profitMargin,
     roe: stock.roe,
+    roa: stock.roa,
+    freeCashFlow: stock.freeCashFlow,
     debtToEquity: stock.debtToEquity,
     avgTarget: stock.avgTarget,
     targetHigh: stock.targetHigh,
@@ -309,21 +315,14 @@ function stockToSnapshotLike(stock: StockDoc | null): SnapshotDoc | null {
     numAnalysts: stock.numAnalysts,
     cons: stock.cons,
     analystBreakdown: stock.analystBreakdown,
+    insiderActivity: stock.insiderActivity,
     sources: stock.sources,
     note: stock.note,
     recentContext: stock.recentContext,
   };
 }
 
-function ComparisonView({
-  a,
-  b,
-  stock,
-}: {
-  a: SnapshotDoc;
-  b: SnapshotDoc;
-  stock: StockDoc | null;
-}) {
+function ComparisonView({ a, b, stock }: { a: SnapshotDoc; b: SnapshotDoc; stock: StockDoc | null }) {
   const currency = a.currency ?? b.currency ?? stock?.currency;
   const days = daysBetween(a.takenAt, b.takenAt);
   const priceDiffAbs = diffAbs(a.price, b.price);
@@ -361,9 +360,7 @@ function ComparisonView({
           <div className={s.bigValue}>{fmtMoney(b.price, currency)}</div>
           <div className={s.deltaCol}>
             <div className={s.deltaAbs}>
-              {priceDiffAbs === null
-                ? '—'
-                : `${priceDiffAbs > 0 ? '+' : ''}${fmtMoney(priceDiffAbs, currency)}`}
+              {priceDiffAbs === null ? '—' : `${priceDiffAbs > 0 ? '+' : ''}${fmtMoney(priceDiffAbs, currency)}`}
             </div>
             <DeltaPill pct={priceDiffPct} />
           </div>
@@ -377,8 +374,8 @@ function ComparisonView({
             <div className={s.metaLabel}>Analyst target tehdy (A)</div>
             <div className={s.big}>{fmtMoney(a.avgTarget, currency)}</div>
             <div className={s.sub}>
-              range {fmtMoney(a.targetLow, currency)} – {fmtMoney(a.targetHigh, currency)} ·{' '}
-              {fmtNum(a.numAnalysts)} analytiků
+              range {fmtMoney(a.targetLow, currency)} – {fmtMoney(a.targetHigh, currency)} · {fmtNum(a.numAnalysts)}{' '}
+              analytiků
             </div>
           </div>
           <div className={s.arrowBig}>→</div>
@@ -391,19 +388,14 @@ function ComparisonView({
               {targetVsActualAbs === null
                 ? '—'
                 : targetVsActualAbs > 0
-                ? `Analytici podcenili o ${fmtMoney(Math.abs(targetVsActualAbs), currency)}`
-                : `Analytici přestřelili o ${fmtMoney(Math.abs(targetVsActualAbs), currency)}`}
+                  ? `Analytici podcenili o ${fmtMoney(Math.abs(targetVsActualAbs), currency)}`
+                  : `Analytici přestřelili o ${fmtMoney(Math.abs(targetVsActualAbs), currency)}`}
             </div>
             <DeltaPill pct={targetVsActualPct} />
           </div>
         </div>
 
-        <TargetRangeHit
-          targetLow={a.targetLow}
-          targetHigh={a.targetHigh}
-          actual={b.price}
-          currency={currency}
-        />
+        <TargetRangeHit targetLow={a.targetLow} targetHigh={a.targetHigh} actual={b.price} currency={currency} />
 
         <ForecastAccuracyRow
           label="EPS forecast (via fwd P/E → trailing P/E)"
@@ -416,13 +408,11 @@ function ComparisonView({
 
         <div className={s.consRow}>
           <div className={s.consCell}>
-            <span className={s.metaLabel}>Consensus tehdy:</span>{' '}
-            <ConsBadge value={a.cons} /> ({fmtNum(a.numAnalysts)})
+            <span className={s.metaLabel}>Consensus tehdy:</span> <ConsBadge value={a.cons} /> ({fmtNum(a.numAnalysts)})
           </div>
           <div className={s.arrow}>→</div>
           <div className={s.consCell}>
-            <span className={s.metaLabel}>Consensus teď:</span>{' '}
-            <ConsBadge value={b.cons} /> ({fmtNum(b.numAnalysts)})
+            <span className={s.metaLabel}>Consensus teď:</span> <ConsBadge value={b.cons} /> ({fmtNum(b.numAnalysts)})
           </div>
         </div>
 
@@ -436,23 +426,41 @@ function ComparisonView({
         <div className={s.fundGrid}>
           <FundRow label="P/E (trailing)" a={a.pe} b={b.pe} />
           <FundRow label="Forward P/E" a={a.fwdPe} b={b.fwdPe} />
+          <FundRow label="EV / EBITDA" a={a.evToEbitda} b={b.evToEbitda} />
           <FundRow label="PEG" a={a.peg} b={b.peg} />
           <FundRow label="52w change" a={a.gain52w} b={b.gain52w} suffix="%" />
           <FundRow label="Market cap" a={a.marketCap} b={b.marketCap} suffix="B" />
           <FundRow label="Revenue growth YoY" a={a.revenueGrowthYoY} b={b.revenueGrowthYoY} suffix="%" />
+          <FundRow label="Earnings growth YoY" a={a.earningsGrowthYoY} b={b.earningsGrowthYoY} suffix="%" />
+          <FundRow label="Gross margin" a={a.grossMargin} b={b.grossMargin} suffix="%" />
+          <FundRow label="Operating margin" a={a.operatingMargin} b={b.operatingMargin} suffix="%" />
           <FundRow label="Profit margin" a={a.profitMargin} b={b.profitMargin} suffix="%" />
           <FundRow label="ROE" a={a.roe} b={b.roe} suffix="%" />
+          <FundRow label="ROA" a={a.roa} b={b.roa} suffix="%" />
+          <FundRow label="Free cash flow" a={a.freeCashFlow} b={b.freeCashFlow} suffix="B" />
           <FundRow label="Debt / Equity" a={a.debtToEquity} b={b.debtToEquity} invertColor />
         </div>
       </section>
+
+      {(a.insiderActivity || b.insiderActivity) && (
+        <InsiderActivitySection a={a.insiderActivity} b={b.insiderActivity} />
+      )}
 
       <section className={s.card}>
         <h3 className={s.sectionTitle}>Poznámky & predikce</h3>
         <div className={s.narrativeGrid}>
           <NarrativeBlock title="Moje predikce (A)" body={a.myPrediction} highlight />
           <NarrativeBlock title="Moje poznámka (A)" body={a.myNote} />
-          <NarrativeBlock title="AI note (A)" subtitle={a.noteUpdatedAt ? fmtDate(a.noteUpdatedAt) : undefined} body={a.note} />
-          <NarrativeBlock title="AI note (B)" subtitle={b.noteUpdatedAt ? fmtDate(b.noteUpdatedAt) : undefined} body={b.note} />
+          <NarrativeBlock
+            title="AI note (A)"
+            subtitle={a.noteUpdatedAt ? fmtDate(a.noteUpdatedAt) : undefined}
+            body={a.note}
+          />
+          <NarrativeBlock
+            title="AI note (B)"
+            subtitle={b.noteUpdatedAt ? fmtDate(b.noteUpdatedAt) : undefined}
+            body={b.note}
+          />
         </div>
       </section>
 
@@ -488,8 +496,8 @@ function TargetRangeHit({
   const verdict = below
     ? `Pod i nejnižším targetem (−${(((targetLow - actual) / targetLow) * 100).toFixed(1)}%)`
     : above
-    ? `Překonala i nejvyšší target (+${(((actual - targetHigh) / targetHigh) * 100).toFixed(1)}%)`
-    : 'Uvnitř analyst range';
+      ? `Překonala i nejvyšší target (+${(((actual - targetHigh) / targetHigh) * 100).toFixed(1)}%)`
+      : 'Uvnitř analyst range';
   const toneCls = below ? s.verdictBad : above ? s.verdictGood : s.verdictNeutral;
 
   return (
@@ -554,10 +562,10 @@ function ForecastAccuracyRow({
   const verdict = zero
     ? 'Shoda s forecastem'
     : bullish
-    ? 'Forecast překonán (bullish)'
-    : bearish
-    ? 'Pod forecastem (bearish)'
-    : '—';
+      ? 'Forecast překonán (bullish)'
+      : bearish
+        ? 'Pod forecastem (bearish)'
+        : '—';
   const toneCls = zero ? s.verdictNeutral : bullish ? s.verdictGood : s.verdictBad;
 
   return (
@@ -585,14 +593,85 @@ function ForecastAccuracyRow({
   );
 }
 
+function InsiderActivitySection({ a, b }: { a: SnapshotDoc['insiderActivity']; b: SnapshotDoc['insiderActivity'] }) {
+  const netA = a?.netPercent;
+  const netB = b?.netPercent;
+  const buyA = a?.buyCount ?? 0;
+  const buyB = b?.buyCount ?? 0;
+  const sellA = a?.sellCount ?? 0;
+  const sellB = b?.sellCount ?? 0;
+  const period = a?.period ?? b?.period ?? '6m';
+
+  const ppDelta = typeof netA === 'number' && typeof netB === 'number' ? netB - netA : null;
+  const hint =
+    ppDelta == null
+      ? ''
+      : ppDelta > 0.5
+        ? 'Insideři začali víc nakupovat (bullish posun)'
+        : ppDelta < -0.5
+          ? 'Insideři začali víc prodávat'
+          : 'Beze změny v insider sentimentu';
+
+  return (
+    <section className={s.card}>
+      <h3 className={s.sectionTitle}>Insider aktivita ({period})</h3>
+      <div className={s.fundGrid}>
+        <div className={s.fundRow}>
+          <div className={s.fundLabel}>Net % insider shares</div>
+          <div className={s.fundValue}>{typeof netA === 'number' ? `${netA.toFixed(2)}%` : '—'}</div>
+          <div className={s.fundArrow}>→</div>
+          <div className={s.fundValue}>{typeof netB === 'number' ? `${netB.toFixed(2)}%` : '—'}</div>
+          <div className={s.fundDelta}>
+            {ppDelta === null ? (
+              <span className={s.deltaMuted}>—</span>
+            ) : (
+              <span
+                className={Math.abs(ppDelta) < 0.05 ? s.deltaNeutral : ppDelta > 0 ? s.deltaPositive : s.deltaNegative}
+              >
+                {ppDelta > 0 ? '▲' : ppDelta < 0 ? '▼' : '•'} {ppDelta > 0 ? '+' : ''}
+                {ppDelta.toFixed(2)} pp
+              </span>
+            )}
+          </div>
+        </div>
+        <div className={s.fundRow}>
+          <div className={s.fundLabel}>Nákupů</div>
+          <div className={s.fundValue}>{buyA}</div>
+          <div className={s.fundArrow}>→</div>
+          <div className={s.fundValue}>{buyB}</div>
+          <div className={s.fundDelta}>
+            <span className={s.deltaMuted}>
+              {buyB - buyA > 0 ? '+' : ''}
+              {buyB - buyA}
+            </span>
+          </div>
+        </div>
+        <div className={s.fundRow}>
+          <div className={s.fundLabel}>Prodejů</div>
+          <div className={s.fundValue}>{sellA}</div>
+          <div className={s.fundArrow}>→</div>
+          <div className={s.fundValue}>{sellB}</div>
+          <div className={s.fundDelta}>
+            <span className={s.deltaMuted}>
+              {sellB - sellA > 0 ? '+' : ''}
+              {sellB - sellA}
+            </span>
+          </div>
+        </div>
+      </div>
+      {hint && <div className={s.accuracyHint}>{hint}</div>}
+    </section>
+  );
+}
+
 function ConsBadge({ value }: { value: string | undefined }) {
   if (!value) return <span className={s.consNone}>—</span>;
   const cls =
     value === 'Strong Buy' || value === 'Buy'
       ? s.consBuy
       : value === 'Strong Sell' || value === 'Sell'
-      ? s.consSell
-      : s.consHold;
+        ? s.consSell
+        : s.consHold;
   return <span className={`${s.consBadge} ${cls}`}>{value}</span>;
 }
 
@@ -635,7 +714,7 @@ function NarrativeBlock({
   highlight?: boolean;
 }) {
   return (
-    <div className={`${s.narrative} ${highlight ? s.narrativeHighlight : ''}`}>
+    <div className={`${s.narrative}`}>
       <div className={s.narrativeHead}>
         <span className={s.narrativeTitle}>{title}</span>
         {subtitle && <span className={s.narrativeSubtitle}>{subtitle}</span>}
@@ -645,13 +724,7 @@ function NarrativeBlock({
   );
 }
 
-function BreakdownBars({
-  a,
-  b,
-}: {
-  a: SnapshotDoc['analystBreakdown'];
-  b: SnapshotDoc['analystBreakdown'];
-}) {
+function BreakdownBars({ a, b }: { a: SnapshotDoc['analystBreakdown']; b: SnapshotDoc['analystBreakdown'] }) {
   const rows = [
     { key: 'strongBuy', label: 'Strong Buy', color: '#16a34a' },
     { key: 'buy', label: 'Buy', color: '#86efac' },
@@ -659,8 +732,7 @@ function BreakdownBars({
     { key: 'sell', label: 'Sell', color: '#fca5a5' },
     { key: 'strongSell', label: 'Strong Sell', color: '#dc2626' },
   ] as const;
-  const sum = (x: SnapshotDoc['analystBreakdown']) =>
-    rows.reduce((acc, r) => acc + (x?.[r.key] ?? 0), 0) || 1;
+  const sum = (x: SnapshotDoc['analystBreakdown']) => rows.reduce((acc, r) => acc + (x?.[r.key] ?? 0), 0) || 1;
   const totalA = sum(a);
   const totalB = sum(b);
   if (!a && !b) return null;
@@ -761,7 +833,10 @@ function extractEpsRevisions(ctx: unknown): EpsRev | null {
   };
 }
 
-function staleness(lastAction: string | undefined, snapshotAt: string): {
+function staleness(
+  lastAction: string | undefined,
+  snapshotAt: string,
+): {
   days: number | null;
   tone: 'fresh' | 'stale' | 'old' | 'unknown';
   label: string;
@@ -823,9 +898,7 @@ function FreshnessPanel({ a, b }: { a: SnapshotDoc; b: SnapshotDoc }) {
 
       {(trendA.length > 0 || trendB.length > 0) && (
         <div className={s.trendWrap}>
-          <div className={s.trendHeader}>
-            Consensus trend (posledních 4 měsíce před snapshotem)
-          </div>
+          <div className={s.trendHeader}>Consensus trend (posledních 4 měsíce před snapshotem)</div>
           <div className={s.trendCols}>
             <TrendMini title="A" periods={trendA} />
             <TrendMini title="B" periods={trendB} />
@@ -853,10 +926,10 @@ function FreshnessCell({
     st.tone === 'fresh'
       ? s.toneFresh
       : st.tone === 'stale'
-      ? s.toneStale
-      : st.tone === 'old'
-      ? s.toneOld
-      : s.toneUnknown;
+        ? s.toneStale
+        : st.tone === 'old'
+          ? s.toneOld
+          : s.toneUnknown;
   return (
     <div className={s.freshCell}>
       <div className={s.freshHeader}>
@@ -865,10 +938,10 @@ function FreshnessCell({
           {st.tone === 'fresh'
             ? '● čerstvé'
             : st.tone === 'stale'
-            ? '● zastarávající'
-            : st.tone === 'old'
-            ? '● staré'
-            : '○ neznámé'}
+              ? '● zastarávající'
+              : st.tone === 'old'
+                ? '● staré'
+                : '○ neznámé'}
         </span>
       </div>
       <div className={s.freshRow}>
@@ -893,15 +966,7 @@ function FreshnessCell({
   );
 }
 
-function RevisionPill({
-  label,
-  up,
-  down,
-}: {
-  label: string;
-  up: number | null;
-  down: number | null;
-}) {
+function RevisionPill({ label, up, down }: { label: string; up: number | null; down: number | null }) {
   const upN = up ?? 0;
   const downN = down ?? 0;
   const empty = up == null && down == null;
@@ -950,11 +1015,12 @@ function TrendMini({ title, periods }: { title: string; periods: TrendPeriod[] }
                 <span style={{ width: seg(p.buy), background: '#86efac' }} title={`Buy ${p.buy}`} />
                 <span style={{ width: seg(p.hold), background: '#9ca3af' }} title={`Hold ${p.hold}`} />
                 <span style={{ width: seg(p.sell), background: '#fca5a5' }} title={`Sell ${p.sell}`} />
-                <span style={{ width: seg(p.strongSell), background: '#dc2626' }} title={`Strong Sell ${p.strongSell}`} />
+                <span
+                  style={{ width: seg(p.strongSell), background: '#dc2626' }}
+                  title={`Strong Sell ${p.strongSell}`}
+                />
               </div>
-              <div className={s.trendCount}>
-                {p.strongBuy + p.buy + p.hold + p.sell + p.strongSell}
-              </div>
+              <div className={s.trendCount}>{p.strongBuy + p.buy + p.hold + p.sell + p.strongSell}</div>
             </div>
           );
         })}

@@ -125,10 +125,7 @@ export function BulkRefreshButtons() {
   };
 
   const runSnapshotAll = () => {
-    const label = window.prompt(
-      'Volitelný label pro všechny snapshoty (např. "Q2 2026"). Nech prázdné pro žádný.',
-      '',
-    );
+    const label = window.prompt('Volitelný label pro všechny snapshoty (např. "Q2 2026"). Nech prázdné pro žádný.', '');
     if (label === null) return; // user cancelled
     const body = label.trim().length > 0 ? { label: label.trim() } : {};
     void run('snapshot-all', body);

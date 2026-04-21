@@ -35,9 +35,7 @@ export async function POST(req: NextRequest) {
       ? body.tickers.filter((t): t is string => typeof t === 'string')
       : null;
 
-  const where: Where = tickers
-    ? { ticker: { in: tickers.map((t) => t.toUpperCase()) } }
-    : { active: { equals: true } };
+  const where: Where = tickers ? { ticker: { in: tickers.map((t) => t.toUpperCase()) } } : { active: { equals: true } };
 
   const start = Date.now();
   const { docs } = await payload.find({

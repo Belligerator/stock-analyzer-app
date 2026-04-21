@@ -377,8 +377,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "ev_to_ebitda": {
+          "name": "ev_to_ebitda",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "free_cash_flow": {
+          "name": "free_cash_flow",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
         "revenue_growth_yo_y": {
           "name": "revenue_growth_yo_y",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "earnings_growth_yo_y": {
+          "name": "earnings_growth_yo_y",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gross_margin": {
+          "name": "gross_margin",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operating_margin": {
+          "name": "operating_margin",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false
@@ -391,6 +421,12 @@
         },
         "roe": {
           "name": "roe",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "roa": {
+          "name": "roa",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false
@@ -463,8 +499,38 @@
           "primaryKey": false,
           "notNull": false
         },
+        "insider_activity_net_percent": {
+          "name": "insider_activity_net_percent",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_buy_count": {
+          "name": "insider_activity_buy_count",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_sell_count": {
+          "name": "insider_activity_sell_count",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_period": {
+          "name": "insider_activity_period",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
         "metrics_updated_at": {
           "name": "metrics_updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analyst_last_action_date": {
+          "name": "analyst_last_action_date",
           "type": "timestamp(3) with time zone",
           "primaryKey": false,
           "notNull": false
@@ -930,7 +996,7 @@
           "name": "stock_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "ticker": {
           "name": "ticker",
@@ -959,6 +1025,24 @@
         "my_note": {
           "name": "my_note",
           "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metrics_updated_at": {
+          "name": "metrics_updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note_updated_at": {
+          "name": "note_updated_at",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analyst_last_action_date": {
+          "name": "analyst_last_action_date",
+          "type": "timestamp(3) with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -1004,8 +1088,32 @@
           "primaryKey": false,
           "notNull": false
         },
+        "ev_to_ebitda": {
+          "name": "ev_to_ebitda",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
         "revenue_growth_yo_y": {
           "name": "revenue_growth_yo_y",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "earnings_growth_yo_y": {
+          "name": "earnings_growth_yo_y",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gross_margin": {
+          "name": "gross_margin",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operating_margin": {
+          "name": "operating_margin",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false
@@ -1018,6 +1126,18 @@
         },
         "roe": {
           "name": "roe",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "roa": {
+          "name": "roa",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "free_cash_flow": {
+          "name": "free_cash_flow",
           "type": "numeric",
           "primaryKey": false,
           "notNull": false
@@ -1085,6 +1205,30 @@
         "analyst_breakdown_strong_sell": {
           "name": "analyst_breakdown_strong_sell",
           "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_net_percent": {
+          "name": "insider_activity_net_percent",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_buy_count": {
+          "name": "insider_activity_buy_count",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_sell_count": {
+          "name": "insider_activity_sell_count",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insider_activity_period": {
+          "name": "insider_activity_period",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
@@ -1908,6 +2052,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "83b7d9be-444e-4474-9f0f-093631e5e7d0",
+  "id": "12fec5ff-b15c-403a-959e-d0027a483984",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

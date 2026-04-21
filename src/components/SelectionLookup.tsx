@@ -169,12 +169,8 @@ export function SelectionLookup({ containerRef, context }: SelectionLookupProps)
               ×
             </button>
           </div>
-          {popover.loading && !popover.explanation && (
-            <div className={s.loading}>Generuji vysvětlení…</div>
-          )}
-          {!popover.loading && popover.error && (
-            <div className={s.error}>Chyba: {popover.error}</div>
-          )}
+          {popover.loading && !popover.explanation && <div className={s.loading}>Generuji vysvětlení…</div>}
+          {!popover.loading && popover.error && <div className={s.error}>Chyba: {popover.error}</div>}
           {popover.explanation && (
             <div style={{ whiteSpace: 'pre-wrap', color: '#e5ecf5', opacity: popover.loading ? 0.5 : 1 }}>
               {popover.explanation}

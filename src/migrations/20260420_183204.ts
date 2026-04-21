@@ -1,4 +1,4 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
+import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
@@ -55,7 +55,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "stock_snapshots_created_at_idx" ON "stock_snapshots" USING btree ("created_at");
   CREATE INDEX "ticker_takenAt_idx" ON "stock_snapshots" USING btree ("ticker","taken_at");
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_stock_snapshots_fk" FOREIGN KEY ("stock_snapshots_id") REFERENCES "public"."stock_snapshots"("id") ON DELETE cascade ON UPDATE no action;
-  CREATE INDEX "payload_locked_documents_rels_stock_snapshots_id_idx" ON "payload_locked_documents_rels" USING btree ("stock_snapshots_id");`)
+  CREATE INDEX "payload_locked_documents_rels_stock_snapshots_id_idx" ON "payload_locked_documents_rels" USING btree ("stock_snapshots_id");`);
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
@@ -67,5 +67,5 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_stock_snapshots_fk";
   
   DROP INDEX "payload_locked_documents_rels_stock_snapshots_id_idx";
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "stock_snapshots_id";`)
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "stock_snapshots_id";`);
 }

@@ -48,18 +48,18 @@ export function AnalystActivitySection({ lastAction, metricsUpdatedAt, revisions
     st.tone === 'fresh'
       ? s.toneFresh
       : st.tone === 'stale'
-      ? s.toneStale
-      : st.tone === 'old'
-      ? s.toneOld
-      : s.toneUnknown;
+        ? s.toneStale
+        : st.tone === 'old'
+          ? s.toneOld
+          : s.toneUnknown;
   const toneLabel =
     st.tone === 'fresh'
       ? '● čerstvé'
       : st.tone === 'stale'
-      ? '● zastarávající'
-      : st.tone === 'old'
-      ? '● staré'
-      : '○ neznámé';
+        ? '● zastarávající'
+        : st.tone === 'old'
+          ? '● staré'
+          : '○ neznámé';
 
   return (
     <div className={s.wrap}>
@@ -85,9 +85,7 @@ export function AnalystActivitySection({ lastAction, metricsUpdatedAt, revisions
               <RevisionPill label="7d" up={revisions.upLast7days} down={revisions.downLast7days} />
               <RevisionPill label="30d" up={revisions.upLast30days} down={revisions.downLast30days} />
             </div>
-            <div className={s.revHint}>
-              ↑ analytik zvýšil odhad zisku (bullish), ↓ snížil (bearish).
-            </div>
+            <div className={s.revHint}>↑ analytik zvýšil odhad zisku (bullish), ↓ snížil (bearish).</div>
           </div>
         )}
       </div>

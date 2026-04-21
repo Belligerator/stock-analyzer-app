@@ -68,7 +68,9 @@ export async function refreshStocks(
       const t0 = Date.now();
       console.log(`[refresh-stocks]   ${tag} fetchStockMetrics…`);
       const metrics = await fetchStockMetrics(yahooSymbol, currency, fxRates);
-      console.log(`[refresh-stocks]   ${tag} fetchStockMetrics done ${Date.now() - t0}ms price=${metrics.price ?? 'null'}`);
+      console.log(
+        `[refresh-stocks]   ${tag} fetchStockMetrics done ${Date.now() - t0}ms price=${metrics.price ?? 'null'}`,
+      );
 
       let recentContext: RecentContext | null = null;
       let contextStatus = 'skipped';
@@ -148,8 +150,14 @@ async function applyMetrics(
     cons: metrics.cons,
     marketCap: metrics.marketCap,
     revenueGrowthYoY: metrics.revenueGrowthYoY,
+    earningsGrowthYoY: metrics.earningsGrowthYoY,
     profitMargin: metrics.profitMargin,
+    grossMargin: metrics.grossMargin,
+    operatingMargin: metrics.operatingMargin,
     roe: metrics.roe,
+    roa: metrics.roa,
+    freeCashFlow: metrics.freeCashFlow,
+    evToEbitda: metrics.evToEbitda,
     debtToEquity: metrics.debtToEquity,
     peg: metrics.peg,
     targetHigh: metrics.targetHigh,
@@ -161,6 +169,12 @@ async function applyMetrics(
       hold: 0,
       sell: 0,
       strongSell: 0,
+    },
+    insiderActivity: metrics.insiderActivity ?? {
+      netPercent: null,
+      buyCount: null,
+      sellCount: null,
+      period: null,
     },
     sources: metrics.sources,
     metricsUpdatedAt: new Date().toISOString(),
