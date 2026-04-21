@@ -160,7 +160,21 @@ Výstup se používá na TESTOVACÍM demo účtu (paper trading, bez reálných 
    Krátce (max 1 věta v závorce za signálem) odůvodni, např. \`SIGNÁL: DRŽET (valuation napnuté, ale AI capex drží růst)\`.
 
 # Výstup
-Vrať POUZE čistý text poznámky (3–5 vět) zakončený řádkem "SIGNÁL: ...". Žádný JSON, žádný markdown, žádné uvozovky kolem, žádný úvod typu "Zde je poznámka:". Pokud se opravdu nemáš co kvalifikovaného říct a data nejsou anomální, vrať prázdný string.`;
+Vrať POUZE čistý text finální poznámky (3–5 vět) zakončený řádkem "SIGNÁL: ...". Žádný JSON, žádný markdown, žádné uvozovky kolem.
+
+**ZAKÁZANÉ preambule / meta-komentáře** — NIKDY nepiš věty jako:
+- "Rozepíšu se k …"
+- "Napíšu poznámku o …"
+- "Potřebuji ověřit …"
+- "Mám dostatek kontextu"
+- "Teď napíšu poznámku"
+- "Začnu analýzou …"
+- "Ověřím headline …"
+- "Zde je poznámka:"
+
+Tohle je interní úvaha, NE součást výstupu. První věta výstupu musí být PŘÍMO faktická (začínat tickerem, názvem firmy, metrikou nebo konkrétním faktem). Pokud přemýšlíš o postupu, dělej to uvnitř — na výstupu musí být jen finální poznámka.
+
+Pokud se opravdu nemáš co kvalifikovaného říct a data nejsou anomální, vrať prázdný string.`;
 
 function extractJsonArray(text: string): string {
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -196,6 +210,33 @@ function extractText(response: Anthropic.Messages.Message): string {
     .trim();
 }
 
+const PREAMBLE_PATTERNS = [
+  /^rozepíšu\s+se\b/i,
+  /^napíšu\s+(poznámk|analýz)/i,
+  /^potřebuji\s+ověřit\b/i,
+  /^mám\s+dostatek\s+kontextu\b/i,
+  /^teď\s+(napíšu|přejdu|analyzuji)/i,
+  /^začnu\s+(analýz|s\s+)/i,
+  /^ověřím\s+(headline|titulek|fakt)/i,
+  /^zde\s+je\s+(poznámk|analýz|shrnutí)/i,
+  /^následuje\s+(poznámk|analýz|shrnutí)/i,
+];
+
+function isPreambleParagraph(para: string): boolean {
+  const trimmed = para.trim();
+  if (trimmed.length === 0) return true;
+  return PREAMBLE_PATTERNS.some((re) => re.test(trimmed));
+}
+
+function stripLeadingPreamble(text: string): string {
+  const paragraphs = text.split(/\n{2,}/);
+  let firstReal = 0;
+  while (firstReal < paragraphs.length && isPreambleParagraph(paragraphs[firstReal])) {
+    firstReal += 1;
+  }
+  return paragraphs.slice(firstReal).join('\n\n').trim();
+}
+
 function cleanNoteOutput(raw: string): string {
   let text = raw.trim();
   const fenceMatch = text.match(/^```(?:\w+)?\s*([\s\S]*?)```$/);
@@ -204,6 +245,7 @@ function cleanNoteOutput(raw: string): string {
     text = text.slice(1, -1).trim();
   }
   text = text.replace(/<\/?cite\b[^>]*>/gi, '');
+  text = stripLeadingPreamble(text);
   text = text
     .replace(/[ \t]+/g, ' ')
     .replace(/ *\n */g, '\n')
