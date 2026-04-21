@@ -465,6 +465,8 @@ function ComparisonView({ a, b, stock }: { a: SnapshotDoc; b: SnapshotDoc; stock
       </section>
 
       <RecentContextPanel a={a.recentContext} b={b.recentContext} />
+
+      <AiDiffPanel aId={String(a.id)} bId={String(b.id)} />
     </div>
   );
 }
@@ -1082,5 +1084,135 @@ function NewsCol({ title, items }: { title: string; items: NewsItem[] }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function AiDiffPanel({ aId, bId }: { aId: string; bId: string }) {
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [model, setModel] = useState<string | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [cached, setCached] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const bothReal = aId !== 'current' && bId !== 'current';
+
+  // On A/B change: reset + attempt cache lookup (only for real↔real pairs).
+  useEffect(() => {
+    setExplanation(null);
+    setModel(null);
+    setGeneratedAt(null);
+    setCached(false);
+    setError(null);
+    if (!bothReal || !aId || !bId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/actions/explain-snapshot-diff?snapshotAId=${encodeURIComponent(aId)}&snapshotBId=${encodeURIComponent(bId)}`,
+          { credentials: 'include' },
+        );
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          exists?: boolean;
+          explanation?: string;
+          model?: string;
+          generatedAt?: string;
+        };
+        if (cancelled) return;
+        if (json.exists && typeof json.explanation === 'string') {
+          setExplanation(json.explanation);
+          setModel(json.model ?? null);
+          setGeneratedAt(json.generatedAt ?? null);
+          setCached(true);
+        }
+      } catch {
+        // Ignore — user can still click Generate.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [aId, bId, bothReal]);
+
+  const generate = useCallback(
+    async (force: boolean) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/actions/explain-snapshot-diff', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ snapshotAId: aId, snapshotBId: bId, force }),
+        });
+        const json = (await res.json()) as {
+          explanation?: string;
+          model?: string;
+          generatedAt?: string;
+          cached?: boolean;
+          error?: string;
+        };
+        if (!res.ok) {
+          throw new Error(json.error ?? `HTTP ${res.status}`);
+        }
+        setExplanation(json.explanation ?? '');
+        setModel(json.model ?? null);
+        setGeneratedAt(json.generatedAt ?? null);
+        setCached(Boolean(json.cached));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [aId, bId],
+  );
+
+  const buttonLabel = explanation
+    ? loading
+      ? 'Generuji…'
+      : 'Přegenerovat'
+    : loading
+      ? 'Generuji…'
+      : 'Vygenerovat AI shrnutí změn';
+
+  return (
+    <section className={s.card}>
+      <div className={s.aiHeader}>
+        <h3 className={s.sectionTitle} style={{ margin: 0 }}>
+          AI shrnutí změn
+          {cached && <span className={s.aiCacheBadge}>cache</span>}
+        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {generatedAt && (
+            <span className={s.aiMeta}>
+              {model ? `${model} · ` : ''}
+              {fmtDate(generatedAt)}
+            </span>
+          )}
+          <button
+            type="button"
+            className={s.aiButton}
+            disabled={loading}
+            onClick={() => generate(Boolean(explanation))}
+          >
+            {buttonLabel}
+          </button>
+        </div>
+      </div>
+
+      {error && <div className={s.aiError}>Chyba: {error}</div>}
+
+      {explanation ? (
+        <div className={s.aiBody}>{explanation}</div>
+      ) : (
+        <div className={s.aiEmpty}>
+          {bothReal
+            ? 'Zatím nevygenerováno. Klikni na "Vygenerovat" — AI porovná oba snapshoty a popíše co se změnilo.'
+            : 'Porovnání se snapshotem „Aktuální stav (live)" se nekešuje — klikni na "Vygenerovat" pro nové shrnutí.'}
+        </div>
+      )}
+    </section>
   );
 }

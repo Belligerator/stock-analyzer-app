@@ -81,7 +81,7 @@
   padding: 6px 10px;
   font-size: 11px;
   color: #cfd8e3;
-  margin-bottom: 8px;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -261,4 +261,65 @@
 .tooltipPrice {
   color: #e5ecf5;
   font-weight: 500;
+}
+
+.tooltipSpx {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.spxMissingHint {
+  font-size: 10px;
+  color: #a78bfa;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.compareWrap {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.compareClearBtn {
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #22303d;
+  background: transparent;
+  color: #94a3b8;
+  font-family: inherit;
+  outline: none;
+}
+
+.compareClearBtn:hover {
+  color: #c4b5fd;
+  border-color: #a78bfa;
+}
+
+.compareSelect {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  outline: none;
+  font-family: inherit;
+  max-width: 180px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 20px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath fill='%2394a3b8' d='M0 0l5 6 5-6z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.compareSelect option {
+  background: #0c1017;
+  color: #e5ecf5;
 }

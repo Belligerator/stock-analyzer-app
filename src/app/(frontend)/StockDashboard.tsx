@@ -20,6 +20,11 @@ export function StockDashboard({ dataset }: { dataset: StocksDataset }) {
     [dataset.stocks, filter],
   );
 
+  const availableTickers = useMemo(
+    () => dataset.stocks.map((st) => ({ ticker: st.ticker, name: st.name })),
+    [dataset.stocks],
+  );
+
   return (
     <div className={s.page}>
       <div className={s.inner}>
@@ -28,7 +33,7 @@ export function StockDashboard({ dataset }: { dataset: StocksDataset }) {
         <StockTable stocks={filtered} onSelect={setSelected} />
         <Legend disclaimer={dataset.disclaimer} />
       </div>
-      <StockModal stock={selected} onClose={() => setSelected(null)} />
+      <StockModal stock={selected} availableTickers={availableTickers} onClose={() => setSelected(null)} />
     </div>
   );
 }

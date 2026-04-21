@@ -9,6 +9,7 @@ import { Stocks } from './collections/stocks/Stocks';
 import { PriceHistory } from './collections/price-history/PriceHistory';
 import { Explanations } from './collections/explanations/Explanations';
 import { StockSnapshots } from './collections/stock-snapshots/StockSnapshots';
+import { SnapshotComparisons } from './collections/snapshot-comparisons/SnapshotComparisons';
 import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
@@ -31,7 +32,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Stocks, PriceHistory, Explanations, StockSnapshots],
+  collections: [Users, Stocks, PriceHistory, Explanations, StockSnapshots, SnapshotComparisons],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -12,6 +12,7 @@ import s from './StockModal.module.css';
 interface StockModalProps {
   stock: Stock | null;
   onClose: () => void;
+  availableTickers?: Array<{ ticker: string; name: string }>;
 }
 
 const GOOD = '#22c55e';
@@ -653,7 +654,7 @@ function AnalystBreakdown({ bd }: { bd: NonNullable<Stock['analystBreakdown']> }
   );
 }
 
-export function StockModal({ stock, onClose }: StockModalProps) {
+export function StockModal({ stock, onClose, availableTickers }: StockModalProps) {
   const noteRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -701,7 +702,7 @@ export function StockModal({ stock, onClose }: StockModalProps) {
 
         {/* Vývoj ceny */}
         <div className={s.chartWrap}>
-          <StockChart ticker={stock.ticker} currency={stock.currency} />
+          <StockChart ticker={stock.ticker} currency={stock.currency} availableTickers={availableTickers} />
         </div>
 
         {/* Cena & valuace */}
