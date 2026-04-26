@@ -306,6 +306,23 @@
   color: #778899;
 }
 
+.insiderExtremeNote {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-top: 6px;
+  max-width: 360px;
+}
+
+.insiderExtremeNote em {
+  font-style: italic;
+  color: #fde68a;
+}
+
 .insiderBreakdown {
   display: flex;
   flex-direction: column;

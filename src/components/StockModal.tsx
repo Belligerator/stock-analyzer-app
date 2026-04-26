@@ -153,11 +153,18 @@ function colorFcf(v: number | null | undefined): string | undefined {
   return BAD;
 }
 
+const INSIDER_EXTREME_THRESHOLD = 50;
+
+function isInsiderNetExtreme(v: number | null | undefined): boolean {
+  return v != null && Math.abs(v) > INSIDER_EXTREME_THRESHOLD;
+}
+
 function colorInsiderNet(v: number | null | undefined): string | undefined {
   if (v == null) return undefined;
-  if (v > 0.5) return GOOD;
-  if (v >= -0.5) return undefined;
-  if (v >= -2) return WARN;
+  if (isInsiderNetExtreme(v)) return undefined;
+  if (v >= 5) return GOOD;
+  if (v > -2) return undefined;
+  if (v >= -10) return WARN;
   return BAD;
 }
 
@@ -378,15 +385,15 @@ const TOOLTIPS: Record<string, TooltipData> = {
     ],
   },
   insiderNet: {
-    text: 'Net Insider Purchase Activity — čisté nákupy insiderů (CEO, CFO, board, významní akcionáři) za posledních ~6 měsíců jako % jejich celkového podílu. Kladné = insideři víc nakupovali než prodávali.',
+    text: 'Net Insider Purchase Activity — čisté nákupy insiderů (CEO, CFO, board, významní akcionáři) za posledních ~6 měsíců jako % jejich aktuálního podílu. Kladné = insideři víc nakupovali než prodávali.',
     example:
-      '+1,5 % = insideři čistě přikoupili 1,5 % svých akcií (bullish „skin in the game"). −2 % = čistě prodali 2 %.',
-    note: 'Prodej sám o sobě má slabší signál — může jít o diverzifikaci, daně nebo vesting opcí. Nejsilnější bullish je naopak koncentrovaný nákup CEO/CFO přímo na otevřeném trhu.',
+      '+6 % = insideři přikoupili objem ve výši 6 % toho, co dnes drží (bullish). −8 % = čistě prodali 8 %.',
+    note: 'Prodej sám o sobě má slabší signál (vesting, daně, diverzifikace). Nejsilnější bullish je koncentrovaný open-market nákup CEO/CFO. Pozor: u recent IPO nebo firem s rozprodaným pre-IPO stake jmenovatel kolabuje a magnituda se nafoukne — nad |50 %| už je číslo jen artefakt.',
     scale: [
-      { color: GOOD, label: '> +0,5 % insideři nakupují' },
-      { color: NEUTRAL, label: '±0,5 % neutrál' },
-      { color: WARN, label: '−2 až −0,5 % mírný prodej' },
-      { color: BAD, label: '< −2 % silný prodej' },
+      { color: GOOD, label: '≥ +5 % silný insider nákup' },
+      { color: NEUTRAL, label: '−2 až +5 % normální šum' },
+      { color: WARN, label: '−10 až −2 % mírný prodej' },
+      { color: BAD, label: '< −10 % výrazný prodej' },
     ],
   },
 };
@@ -572,10 +579,21 @@ function InsiderActivity({ ia }: { ia: NonNullable<Stock['insiderActivity']> }) 
 
   if (net == null && buy === 0 && sell === 0) return null;
 
+  const extreme = isInsiderNetExtreme(net);
+  const isPositiveExtreme = extreme && (net ?? 0) > 0;
   const color = colorInsiderNet(net);
   const displayNet = net == null ? '—' : formatPct(net);
-  const caption =
-    net == null ? '' : net > 0 ? 'Čisté nákupy insiderů' : net < 0 ? 'Čisté prodeje insiderů' : 'Neutrální';
+  const caption = extreme
+    ? isPositiveExtreme
+      ? 'Extrémní inflow — magnituda není spolehlivá'
+      : 'Extrémní outflow — magnituda není spolehlivá'
+    : net == null
+      ? ''
+      : net > 0
+        ? 'Čisté nákupy insiderů'
+        : net < 0
+          ? 'Čisté prodeje insiderů'
+          : 'Neutrální';
 
   return (
     <div className={s.insiderWrap}>
@@ -584,6 +602,17 @@ function InsiderActivity({ ia }: { ia: NonNullable<Stock['insiderActivity']> }) 
           {displayNet}
         </div>
         <div className={s.insiderCaption}>{caption}</div>
+        {extreme && (
+          <div className={s.insiderExtremeNote}>
+            Yahoo počítá net % vůči <em>aktuálním</em> insider holdings. Když base stake spadl nízko (post-IPO
+            unlocks, dlouhodobé rozprodávání zakladatelů, nebo nový exec s velkým grantem), jmenovatel zkolabuje a
+            poměr letí mimo škálu. Hodnota znamená „
+            {isPositiveExtreme ? 'nakoupili' : 'prodali'} ~
+            {Math.round(Math.abs(net ?? 0) / 100)}× to, co teď drží". Směr signálu (
+            {isPositiveExtreme ? 'bullish' : 'bearish'}) je validní, ale magnituda je metric-distortion — neporovnávej
+            s běžnými ±2 % insider signály.
+          </div>
+        )}
       </div>
       <div className={s.insiderBreakdown}>
         <div className={s.insiderBreakdownRow}>
