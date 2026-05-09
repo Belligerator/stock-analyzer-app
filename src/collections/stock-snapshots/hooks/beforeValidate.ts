@@ -26,6 +26,7 @@ const FROZEN_KEYS = [
   'cons',
   'analystBreakdown',
   'insiderActivity',
+  'analystTargets',
   'sources',
   'note',
   'recentContext',
@@ -86,6 +87,20 @@ export const beforeValidateSnapshot: CollectionBeforeValidateHook = async ({ dat
     if (k === 'sources' && Array.isArray(fromStock)) {
       (data as Record<string, unknown>)[k] = (fromStock as Array<{ url?: string | null }>).map((src) => ({
         url: src?.url ?? undefined,
+      }));
+    } else if (k === 'analystTargets' && Array.isArray(fromStock)) {
+      (data as Record<string, unknown>)[k] = (
+        fromStock as Array<{
+          provider?: string | null;
+          rating?: string | null;
+          targetPrice?: number | null;
+          reportDate?: string | null;
+        }>
+      ).map((t) => ({
+        provider: t?.provider ?? '',
+        rating: t?.rating ?? null,
+        targetPrice: t?.targetPrice ?? null,
+        reportDate: t?.reportDate ?? null,
       }));
     } else {
       (data as Record<string, unknown>)[k] = fromStock;

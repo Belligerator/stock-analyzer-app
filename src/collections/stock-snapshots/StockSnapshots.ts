@@ -206,6 +206,30 @@ export const StockSnapshots: CollectionConfig = {
               ],
             },
             {
+              name: 'analystTargets',
+              type: 'array',
+              admin: {
+                readOnly: true,
+                description: 'Zamrzlé per-firma target ceny z research reports (Morningstar, Argus, ...) v okamžiku takenAt.',
+                initCollapsed: false,
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'provider', type: 'text', admin: { width: '40%' } },
+                    { name: 'rating', type: 'text', admin: { width: '20%' } },
+                    { name: 'targetPrice', type: 'number', admin: { width: '20%' } },
+                    {
+                      name: 'reportDate',
+                      type: 'date',
+                      admin: { width: '20%', date: { pickerAppearance: 'dayOnly' } },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
               name: 'sources',
               type: 'array',
               fields: [{ name: 'url', type: 'text' }],

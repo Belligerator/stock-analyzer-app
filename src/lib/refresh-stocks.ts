@@ -186,6 +186,14 @@ async function applyMetrics(
   if (recentContext) {
     data.recentContext = recentContext;
     data.analystLastActionDate = recentContext.analystLastActionDate ?? null;
+    data.analystTargets = recentContext.researchReports
+      .filter((r) => typeof r.targetPrice === 'number' && Number.isFinite(r.targetPrice))
+      .map((r) => ({
+        provider: r.provider || '',
+        rating: r.investmentRating ?? null,
+        targetPrice: r.targetPrice,
+        reportDate: r.reportDate || null,
+      }));
   }
 
   await payload.update({

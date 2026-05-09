@@ -219,6 +219,31 @@ export const Stocks: CollectionConfig = {
               ],
             },
             {
+              name: 'analystTargets',
+              type: 'array',
+              admin: {
+                readOnly: true,
+                description:
+                  'Per-firma target ceny z Yahoo research reports (Morningstar, Argus, ...). Aktualizováno při refreshi.',
+                initCollapsed: false,
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'provider', type: 'text', admin: { width: '40%' } },
+                    { name: 'rating', type: 'text', admin: { width: '20%' } },
+                    { name: 'targetPrice', type: 'number', admin: { width: '20%' } },
+                    {
+                      name: 'reportDate',
+                      type: 'date',
+                      admin: { width: '20%', date: { pickerAppearance: 'dayOnly' } },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
               name: 'analystActivity',
               type: 'ui',
               admin: {
